@@ -1,0 +1,29 @@
+---
+- hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Disable firewalld
+      systemd: name=firewalld enabled=no state=stopped
+
+    - name: Disable NetworkManager
+      systemd: name=NetworkManager enabled=no state=stopped
+
+    - name: Disable network
+      systemd: name=network enabled=no state=stopped
+
+    - name: Install RDO {{ os_release }} repository
+      yum: name=centos-release-openstack-{{ os_release }} state=installed
+
+    - name: Install RDO release
+      yum:
+        name: https://rdoproject.org/repos/rdo-release.rpm
+        state: installed
+
+    - name: Install packstack installer
+      yum: name=openstack-packstack state=installed update_cache=yes
+
+    - name: Execute packstck installer
+      command: packstack --allinone
+      # args:
+      #   creates:
