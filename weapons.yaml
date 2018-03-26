@@ -9,6 +9,9 @@
     - name: Ensure tmux is installed
       yum: name=tmux state=installed
 
+    - name: Ensure tree is installed
+      yum: name=tree state=installed
+
     - name: Ensure Zsh is installed
       yum: name=zsh state=installed
 
@@ -17,7 +20,6 @@
 
     - name: Create my user account
       user: name="{{ ansible_user }}" shell=/usr/bin/zsh
-      become: no
 
     - name: Add my public key to the server
       authorized_key: user="{{ ansible_user }}"
