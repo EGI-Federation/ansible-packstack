@@ -1,0 +1,34 @@
+---
+- hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Ensure vim is installed
+      yum: name=vim state=installed
+
+    - name: Ensure tmux is installed
+      yum: name=tmux state=installed
+
+    - name: Ensure Zsh is installed
+      yum: name=zsh state=installed
+
+    - name: Ensure git is installed
+      yum: name=git state=installed
+
+    - name: Create my user account
+      user: name="{{ ansible_user }}" shell=/usr/bin/zsh
+      become: no
+
+    - name: Add my public key to the server
+      authorized_key: user="{{ ansible_user }}"
+                      key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+      become: no
+
+    - name: Install oh-my-zsh
+      git: repo=https://github.com/robbyrussell/oh-my-zsh.git
+           dest=~/.oh-my-zsh
+      become: no
+
+    - name: Copy .zshrc template
+      command: cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
+      become: no
