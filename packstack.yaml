@@ -15,11 +15,6 @@
     - name: Install RDO {{ os_release }} repository
       yum: name=centos-release-openstack-{{ os_release }} state=installed
 
-    - name: Install RDO release
-      yum:
-        name: https://rdoproject.org/repos/rdo-release.rpm
-        state: absent
-
     - name: Install packstack installer
       yum: name=openstack-packstack state=installed update_cache=yes
 
