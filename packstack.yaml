@@ -9,16 +9,19 @@
     - name: Disable NetworkManager
       systemd: name=NetworkManager enabled=no state=stopped
 
-    - name: Disable network
-      systemd: name=network enabled=no state=stopped
+    - name: Enable network
+      systemd: name=network enabled=yes state=started
 
-    - name: Install RDO {{ os_release }} repository
+    - name: Install OpenStack {{ os_release }} repository
       yum: name=centos-release-openstack-{{ os_release }} state=installed
 
-    - name: Install packstack installer
-      yum: name=openstack-packstack state=installed update_cache=yes
+    - name: install updates
+      yum: name=* state=latest update_cache=yes
 
-    - name: Execute packstck installer
-      command: packstack --allinone
+    - name: Install packstack installer
+      yum: name=openstack-packstack state=installed
+
+#    - name: Execute packstck installer
+      # command: packstack --allinone
       # args:
       #   creates:
