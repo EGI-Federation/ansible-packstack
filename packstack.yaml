@@ -27,7 +27,8 @@
     - name: Install packstack installer
       yum: name=openstack-packstack state=installed
 
-#    - name: Execute packstck installer
-      # command: packstack --allinone
-      # args:
-      #   creates:
+    - name: Execute packstck installer
+      command: packstack --allinone
+      args:
+        chdir: '/root'
+        creates: '/root/keystonerc_admin'
