@@ -10,7 +10,7 @@
       systemd: name=NetworkManager enabled=no state=stopped
 
     - name: Enable network
-      systemd: name=network enabled=yes state=started
+      systemd: name=network enabled=yes
 
     - name: Install OpenStack {{ os_release }} repository
       yum: name=centos-release-openstack-{{ os_release }} state=installed
