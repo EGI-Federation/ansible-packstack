@@ -12,6 +12,27 @@ Based on https://linuxacademy.com/howtoguides/posts/show/topic/12453-deploying-o
 ansible-playbook packstack.yaml -i inventory.ini -u $(whoami)
 ```
 
+## Testing
+
+It can be easy to test using a docke wrapper.
+
+* Copy `/root/keystonerc_admin` or `/root/keystonerc_demo` configuratio to a site-specific file in `~/.stack` directory
+
+```sh
+$ cat ~/.stack/my_site
+export OS_USERNAME=admin
+export OS_PASSWORD=XXXXXXXXXX
+export OS_AUTH_URL=http://XXX.XXX.XXX.XXX:5000/v3
+export OS_PROJECT_NAME=admin
+export OS_USER_DOMAIN_NAME=Default
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_IDENTITY_API_VERSION=3
+```
+
+```sh
+docker run -it --rm -v ~/.stack:/root/.stack gbraad/openstack-client:centos stack my_site openstack image list
+```
+
 ## Troubleshooting
 
 In case of problems with installing/updating python-urllib3:
