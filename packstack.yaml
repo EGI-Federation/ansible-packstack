@@ -3,19 +3,25 @@
   become: yes
   become_method: sudo
   tasks:
-    - name: Disable firewalld
+    - name: Disable firewalld service
       systemd: name=firewalld enabled=no state=stopped
 
-    - name: Disable NetworkManager
+    - name: Disable NetworkManager service
       systemd: name=NetworkManager enabled=no state=stopped
 
-    - name: Enable network
+    - name: Enable network service
       systemd: name=network enabled=yes
+
+    - name: Install NTP package
+       yum: name=ntp state=installed
+
+    - name: Enable NTP service
+      systemd: name=ntpd enabled=yes state=started
 
     - name: Install OpenStack {{ os_release }} repository
       yum: name=centos-release-openstack-{{ os_release }} state=installed
 
-    - name: install updates
+    - name: Install updates
       yum: name=* state=latest update_cache=yes
 
     - name: Install packstack installer
