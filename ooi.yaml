@@ -1,0 +1,32 @@
+---
+- hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+    # XXX here repo is hardcoded (no ocata version yet)
+    - name: Configure Keystone VOMS repository
+      yum_repository:
+        name: keystone.voms-centos-7-x86_6
+        description: Repository for keystone.voms
+        baseurl: "http://repository.egi.eu/community/software/keystone.voms/stable-newton/releases/centos/7/x86_64/RPMS/"
+        gpgcheck: no
+        gpgkey: http://repository.egi.eu/community/keys/APPDBCOMM-DEB-PGP-KEY.asc
+
+    - name: Install Keystone VOMS module
+      yum: name=python-keystone_voms state=installed
+
+    - name: Add VOMS filter
+      blockinfile:
+        path: /etc/keystone/keystone-paste.ini
+        block: |
+          [filter:voms]
+          paste.filter_factory = keystone_voms.core:VomsAuthNMiddleware.factory
+
+    - name: Enable VOMS filter in the public_api pipeline
+      lineinfile:
+        dest: /etc/keystone/keystone-paste.ini
+        regexp: '^pipeline = (.*) public_service'
+        line: 'pipeline = \1 voms public_service'
+        backrefs: yes
+
+
