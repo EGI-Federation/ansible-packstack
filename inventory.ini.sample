@@ -1,1 +1,1 @@
-XXX.XXX.XXX.XXX os_release=ocata
+XXX.XXX.XXX.XXX os_release=ocata ssl_cacert=./path/to/ssl_cacert.crt ssl_cert=./path/to/ssl_cert.crt ssl_key=./path/to/ssl_cert.key

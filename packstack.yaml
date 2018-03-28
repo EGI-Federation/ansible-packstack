@@ -13,7 +13,7 @@
       systemd: name=network enabled=yes
 
     - name: Install NTP package
-       yum: name=ntp state=installed
+      yum: name=ntp state=installed
 
     - name: Enable NTP service
       systemd: name=ntpd enabled=yes state=started
@@ -27,8 +27,27 @@
     - name: Install packstack installer
       yum: name=openstack-packstack state=installed
 
-    - name: Execute packstck installer
-      command: packstack --allinone
-      args:
-        chdir: '/root'
-        creates: '/root/keystonerc_admin'
+    - name: Copy server certificate
+      copy:
+        src: '{{ item.src }}'
+        dest: '{{ item.path }}'
+        owner: root
+        group: root
+        mode: '{{ item.mode }}'
+      with_items:
+        - src: '{{ ssl_cacert }}'
+          path: /etc/pki/tls/certs/os_packstack_cacert.pem
+          mode: '0644'
+        - src: '{{ ssl_cert }}'
+          path: /etc/pki/tls/certs/os_packstack_cert.pem
+          mode: '0644'
+        - src: '{{ ssl_key }}'
+          path: /etc/pki/tls/private/os_packstack_key.pem
+          mode: '0600'
+
+          #     - name: Execute packstck installer
+          #       #command: packstack --allinone --os-horizon-ssl=y --os-ssl-cert=/etc/pki/tls/certs/os_packstack_cert.pem --os-ssl-key=/etc/pki/tls/private/os_packstack_key.pem --os-ssl-cachain=/etc/pki/tls/certs/os_packstack_cacert.pem --ssl-cacert-selfsign=n --nova-ssl-cert=/etc/pki/tls/certs/os_packstack_cert.pem --nova-ssl-key=/etc/pki/tls/private/os_packstack_key.pem
+          #       command: packstack --allinone --os-horizon-ssl=y
+          #       args:
+          #         chdir: '/root'
+          #         creates: '/root/keystonerc_admin'
