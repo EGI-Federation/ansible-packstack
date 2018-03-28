@@ -2,7 +2,11 @@
 
 Deploying a packstack-based OpenStack test instance using Ansible.
 
-Based on https://linuxacademy.com/howtoguides/posts/show/topic/12453-deploying-openstack-rdo-allinone-vm-for-multidomain-support
+Based on:
+* https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux_OpenStack_Platform/2/html/Getting_Started_Guide/part-Deploying_OS_using_PackStack.html
+* https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/
+* https://www.tecmint.com/openstack-installation-guide-rhel-centos/
+* https://linuxacademy.com/howtoguides/posts/show/topic/12453-deploying-openstack-rdo-allinone-vm-for-multidomain-support
 
 ## Using
 
