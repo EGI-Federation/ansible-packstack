@@ -1,0 +1,24 @@
+---
+- hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Add IGTF repository for YUM
+      yum_repository:
+        name: EGI-trustanchors
+        description: EGI-trustanchors repo
+        baseurl: http://repository.egi.eu/sw/production/cas/1/current/
+        enabled: yes
+        gpgcheck: yes
+        gpgkey: http://repository.egi.eu/sw/production/cas/1/GPG-KEY-EUGridPMA-RPM-3
+
+    - name: Install CAs
+      package:
+        name: ca-policy-egi-core
+        state: latest
+
+    - name: Install CRL package
+      package:
+        name: fetch-crl
+        state: latest
+        enablerepo: epel
