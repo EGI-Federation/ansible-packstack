@@ -205,15 +205,19 @@
       notify:
         - restart nova-compute
 
+    # XXX ever chaning task, may register a mysql output before running
     - name: Update 5000/v2.0 endpoints in Keystone database
       shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:5000/v2.0' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5000/v2.0';"
 
+    # XXX ever chaning task, may register a mysql output before running
     - name: Update 35357/v2.0 endpoints in Keystone database
       shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:35357/v2.0' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:35357/v2.0';"
 
+    # XXX ever chaning task, may register a mysql output before running
     - name: Update 5000/v3 endpoints in Keystone database
       shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:5000/v3' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5000/v3';"
 
+    # XXX ever chaning task, may register a mysql output before running
     - name: Update 35357/v3 endpoints in Keystone database
       shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:35357/v3' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:35357/v3';"
 
