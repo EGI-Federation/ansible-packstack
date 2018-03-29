@@ -95,6 +95,24 @@
       notify:
         - restart nova-compute
 
+    - name: Check if OCCI service exists
+      shell: source /root/keystonerc_admin && openstack service list -c Name -f value | { grep -c occi || true; }
+      changed_when: False
+      register: occi_service
+
+    - name: Create OCCI service
+      shell: source /root/keystonerc_admin && openstack service create --name occi --description "OCCI Interface" occi
+      when: occi_service.stdout == "0"
+
+    - name: Check if OCCI endpoint exists
+      shell: source /root/keystonerc_admin && openstack endpoint list -c 'Service Name' -f value | { grep -c occi || true; }
+      changed_when: False
+      register: occi_endpoint
+
+    - name: Create OCCI endpoint
+      shell: source /root/keystonerc_admin && openstack endpoint create --region RegionOne occi public https://{{ server_fqdn }}:8787/occi1.1
+      when: occi_endpoint.stdout == "0"
+
   handlers:
     - name: restart nova-api
       service: name=openstack-nova-api state=restarted
