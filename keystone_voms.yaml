@@ -29,4 +29,92 @@
         line: 'pipeline = \1 voms public_service'
         backrefs: yes
 
+    - name: Add VOMS configuration for keystone
+      blockinfile:
+        path: /etc/keystone/keystone.conf
+        block: |
+          [voms]
+          vomsdir_path = /etc/grid-security/vomsdir
+          ca_path = /etc/grid-security/certificates
+          voms_policy = /etc/keystone/voms.json
+          vomsapi_lib = libvomsapi.so.1
+          autocreate_users = True
+          add_roles = False
+          user_roles = _member_
+          enable_pusp = False
 
+    - name: Add default VOs LSC files
+      copy:
+        src: ./lsc/
+        dest: /etc/grid-security/vomsdir/
+
+    - name: Add default VO configuration for keystone
+      blockinfile:
+        path: /etc/keystone/voms.json
+        create: yes
+        block: |
+          {
+            "dteam": {
+              "tenant": "dteam"
+            }
+          }
+
+    - name: Enable HTTPS for Keystone
+      ini_file:
+        path: /etc/keystone/keystone.conf
+        section: ssl
+        option: enable
+        value: True
+        backup: yes
+
+    - name: Enable HTTPS for Keystone in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: keystone_authtoken
+        option: auth_uri
+        value: https://{{ server_fqdn }}:5000/
+        backup: yes
+
+    - name: Enable HTTPS for nova in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: keystone_authtoken
+        option: auth_url
+        value: https://{{ server_fqdn }}:35357
+        backup: yes
+
+    - name: Set ca_file for HTTPS for nova in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: ssl
+        option: ca_file
+        value: /etc/pki/tls/certs/os_packstack_cacert.pem
+        backup: yes
+
+    - name: Set cert_file for HTTPS for nova in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: ssl
+        option: cert_file
+        value: /etc/pki/tls/certs/os_packstack_cert.pem
+        backup: yes
+
+    - name: Set key_file for HTTPS for nova in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: ssl
+        option: key_file
+        value: /etc/pki/tls/private/os_packstack_key.pem
+        backup: yes
+
+    - name: Update 5000/v2.0 endpoints in Keystone database
+      shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:5000/v2.0' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5000/v2.0';"
+
+    - name: Update 35357/v2.0 endpoints in Keystone database
+      shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:35357/v2.0' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:35357/v2.0';"
+
+    - name: Update 5000/v3 endpoints in Keystone database
+      shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:5000/v3' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5000/v3';"
+
+    - name: Update 35357/v3 endpoints in Keystone database
+      shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:35357/v3' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:35357/v3';"
