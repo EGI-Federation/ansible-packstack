@@ -23,7 +23,7 @@
         value: ooi.wsgi:OCCIMiddleware.factory
         backup: yes
       notify:
-        - restart nova
+        - restart nova-api
 
     - name: Add use to OCCI API composite to nova api-paste.ini
       ini_file:
@@ -33,7 +33,7 @@
         value: call:nova.api.auth:pipeline_factory_v21
         backup: yes
       notify:
-        - restart nova
+        - restart nova-api
 
     - name: Add noauth2 to OCCI API composite to nova api-paste.ini
       ini_file:
@@ -43,7 +43,7 @@
         value: cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit osprofiler noauth2 occi osapi_compute_app_v21
         backup: yes
       notify:
-        - restart nova
+        - restart nova-api
 
     - name: Add keystone to OCCI API composite to nova api-paste.ini
       ini_file:
@@ -53,7 +53,7 @@
         value: cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit osprofiler authtoken keystonecontext legacy_v2_compatible occi osapi_compute_app_v21
         backup: yes
       notify:
-        - restart nova
+        - restart nova-api
 
     - name: Add use to OOI composite to nova api-paste.ini
       ini_file:
@@ -63,7 +63,7 @@
         value: call:nova.api.openstack.urlmap:urlmap_factory
         backup: yes
       notify:
-        - restart nova
+        - restart nova-api
 
     - name: Add occi1.1 to OOI composite to nova api-paste.ini
       ini_file:
@@ -73,7 +73,7 @@
         value: occi_api_11
         backup: yes
       notify:
-        - restart nova
+        - restart nova-api
 
     - name: Enable OOI API in nova.conf
       ini_file:
@@ -83,7 +83,7 @@
         value: osapi_compute,metadata,ooi
         backup: yes
       notify:
-        - restart nova
+        - restart nova-compute
 
     - name: Configure OOI port in nova.conf
       ini_file:
@@ -93,8 +93,11 @@
         value: 8787
         backup: yes
       notify:
-        - restart nova-api
+        - restart nova-compute
 
   handlers:
     - name: restart nova-api
       service: name=openstack-nova-api state=restarted
+
+    - name: restart nova-compute
+      service: name=openstack-nova-compute state=restarted
