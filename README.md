@@ -11,6 +11,7 @@ Based on:
     * https://linuxacademy.com/howtoguides/posts/show/topic/12453-deploying-openstack-rdo-allinone-vm-for-multidomain-support
   * Federated Cloud (Keystone-VOMS, OOI) setup
     * https://wiki.egi.eu/wiki/Federated_Cloud_Ocata_guide
+    * https://keystone-voms.readthedocs.io/en/stable-newton/configuration.html
 
 ## Using
 
