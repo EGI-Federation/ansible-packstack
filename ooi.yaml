@@ -1,0 +1,100 @@
+---
+- hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+    # XXX Hardcoded for OCCI 1.1
+    - name: Configure OOI repository
+      yum_repository:
+        name: ooi-centos-7-x86_6
+        description: Repository for OOI
+        baseurl: "http://repository.egi.eu/community/software/ooi/occi-1.1/releases/centos/7/x86_64/RPMS/"
+        gpgcheck: no
+        gpgkey: http://repository.egi.eu/community/keys/APPDBCOMM-DEB-PGP-KEY.asc
+
+    - name: Install OOI
+      yum: name=python-ooi state=installed
+
+    - name: Add OCCI filter to nova api-paste.ini
+      ini_file:
+        path: /etc/nova/api-paste.ini
+        section: filter:occi
+        option: paste.filter_factory
+        value: ooi.wsgi:OCCIMiddleware.factory
+        backup: yes
+      notify:
+        - restart nova
+
+    - name: Add use to OCCI API composite to nova api-paste.ini
+      ini_file:
+        path: /etc/nova/api-paste.ini
+        section: composite:occi_api_11
+        option: use
+        value: call:nova.api.auth:pipeline_factory_v21
+        backup: yes
+      notify:
+        - restart nova
+
+    - name: Add noauth2 to OCCI API composite to nova api-paste.ini
+      ini_file:
+        path: /etc/nova/api-paste.ini
+        section: composite:occi_api_11
+        option: noauth2
+        value: cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit osprofiler noauth2 occi osapi_compute_app_v21
+        backup: yes
+      notify:
+        - restart nova
+
+    - name: Add keystone to OCCI API composite to nova api-paste.ini
+      ini_file:
+        path: /etc/nova/api-paste.ini
+        section: composite:occi_api_11
+        option: keystone
+        value: cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit osprofiler authtoken keystonecontext legacy_v2_compatible occi osapi_compute_app_v21
+        backup: yes
+      notify:
+        - restart nova
+
+    - name: Add use to OOI composite to nova api-paste.ini
+      ini_file:
+        path: /etc/nova/api-paste.ini
+        section: composite:ooi
+        option: use
+        value: call:nova.api.openstack.urlmap:urlmap_factory
+        backup: yes
+      notify:
+        - restart nova
+
+    - name: Add occi1.1 to OOI composite to nova api-paste.ini
+      ini_file:
+        path: /etc/nova/api-paste.ini
+        section: composite:ooi
+        option: /occi1.1
+        value: occi_api_11
+        backup: yes
+      notify:
+        - restart nova
+
+    - name: Enable OOI API in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: DEFAULT
+        option: enabled_apis
+        value: osapi_compute,metadata,ooi
+        backup: yes
+      notify:
+        - restart nova
+
+    - name: Configure OOI port in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: DEFAULT
+        option: ooi_listen_port
+        value: 8787
+        backup: yes
+      notify:
+        - restart nova-api
+
+  handlers:
+    - name: restart nova-api
+      service: name=openstack-nova-api state=restarted
