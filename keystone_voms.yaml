@@ -3,6 +3,30 @@
   become: yes
   become_method: sudo
   tasks:
+    # XXX This should be configurable
+    - name: Add default VOs LSC files
+      copy:
+        src: ./lsc/
+        dest: /etc/grid-security/vomsdir/
+
+    # XXX This should be configurable
+    - name: Add default VO configuration for keystone
+      blockinfile:
+        path: /etc/keystone/voms.json
+        create: yes
+        block: |
+          {
+            "ops": {
+              "tenant": "ops"
+            },
+            "dteam": {
+              "tenant": "dteam"
+            },
+            "fedcloud.egi.eu": {
+              "tenant": "fedcloud"
+            }
+          }
+
     # XXX here repo is hardcoded (no ocata version yet)
     - name: Configure Keystone VOMS repository
       yum_repository:
@@ -21,6 +45,8 @@
         block: |
           [filter:voms]
           paste.filter_factory = keystone_voms.core:VomsAuthNMiddleware.factory
+      notify:
+        - restart apache
 
     - name: Enable VOMS filter in the public_api pipeline
       lineinfile:
@@ -28,6 +54,8 @@
         regexp: '^pipeline = (.*) public_service'
         line: 'pipeline = \1 voms public_service'
         backrefs: yes
+      notify:
+        - restart apache
 
     - name: Add VOMS configuration for keystone
       blockinfile:
@@ -42,22 +70,8 @@
           add_roles = False
           user_roles = _member_
           enable_pusp = False
-
-    - name: Add default VOs LSC files
-      copy:
-        src: ./lsc/
-        dest: /etc/grid-security/vomsdir/
-
-    - name: Add default VO configuration for keystone
-      blockinfile:
-        path: /etc/keystone/voms.json
-        create: yes
-        block: |
-          {
-            "dteam": {
-              "tenant": "dteam"
-            }
-          }
+      notify:
+        - restart apache
 
     - name: Enable HTTPS for Keystone
       ini_file:
@@ -66,6 +80,8 @@
         option: enable
         value: True
         backup: yes
+      notify:
+        - restart apache
 
     - name: Enable HTTPS for Keystone in nova.conf
       ini_file:
@@ -74,6 +90,8 @@
         option: auth_uri
         value: https://{{ server_fqdn }}:5000/
         backup: yes
+      notify:
+        - restart nova-compute
 
     - name: Enable HTTPS for nova in nova.conf
       ini_file:
@@ -82,6 +100,8 @@
         option: auth_url
         value: https://{{ server_fqdn }}:35357
         backup: yes
+      notify:
+        - restart nova-compute
 
     - name: Set ca_file for HTTPS for nova in nova.conf
       ini_file:
@@ -90,6 +110,8 @@
         option: ca_file
         value: /etc/pki/tls/certs/os_packstack_cacert.pem
         backup: yes
+      notify:
+        - restart nova-compute
 
     - name: Set cert_file for HTTPS for nova in nova.conf
       ini_file:
@@ -98,6 +120,8 @@
         option: cert_file
         value: /etc/pki/tls/certs/os_packstack_cert.pem
         backup: yes
+      notify:
+        - restart nova-compute
 
     - name: Set key_file for HTTPS for nova in nova.conf
       ini_file:
@@ -106,6 +130,8 @@
         option: key_file
         value: /etc/pki/tls/private/os_packstack_key.pem
         backup: yes
+      notify:
+        - restart nova-compute
 
     - name: Update 5000/v2.0 endpoints in Keystone database
       shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:5000/v2.0' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5000/v2.0';"
@@ -118,3 +144,10 @@
 
     - name: Update 35357/v3 endpoints in Keystone database
       shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:35357/v3' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:35357/v3';"
+
+  handlers:
+    - name: restart apache
+      service: name=httpd state=restarted
+
+    - name: restart nova-compute
+      service: name=openstack-nova-compute state=restarted
