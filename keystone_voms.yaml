@@ -51,7 +51,7 @@
     - name: Enable VOMS filter in the public_api pipeline
       lineinfile:
         dest: /etc/keystone/keystone-paste.ini
-        regexp: '^pipeline = (.*) public_service'
+        regexp: '^pipeline = (.* ec2_extension) public_service'
         line: 'pipeline = \1 voms public_service'
         backrefs: yes
       notify:
@@ -80,6 +80,78 @@
         option: enable
         value: True
         backup: yes
+      notify:
+        - restart apache
+
+    - name: Configure SSL ca_certs for Keystone
+      ini_file:
+        path: /etc/keystone/keystone.conf
+        section: ssl
+        option: ca_certs
+        value: /etc/pki/tls/certs/os_packstack_cacert.pem
+        backup: yes
+      notify:
+        - restart apache
+
+    - name: Configure SSL certfile for Keystone
+      ini_file:
+        path: /etc/keystone/keystone.conf
+        section: ssl
+        option: certfile
+        value: /etc/pki/tls/certs/os_packstack_cert.pem
+        backup: yes
+      notify:
+        - restart apache
+
+    - name: Configure SSL keyfile for Keystone
+      ini_file:
+        path: /etc/keystone/keystone.conf
+        section: ssl
+        option: keyfile
+        value: /etc/pki/tls/private/os_packstack_key.pem
+        backup: yes
+      notify:
+        - restart apache
+
+    - name: Update servername in Keystone admin VHost
+      lineinfile:
+        dest: /etc/httpd/conf.d/10-keystone_wsgi_admin.conf
+        regexp: '^(\s+)ServerName vnode-0.localdomain$'
+        line: '\1ServerName {{ server_fqdn }}'
+        backrefs: yes
+      notify:
+        - restart apache
+
+    - name: Update servername in Keystone main VHost
+      lineinfile:
+        dest: /etc/httpd/conf.d/10-keystone_wsgi_main.conf
+        regexp: '^(\s+)ServerName vnode-0.localdomain'
+        line: '\1ServerName {{ server_fqdn }}'
+        backrefs: yes
+      notify:
+        - restart apache
+
+    - name: Configure HTTPS in Keystone admin VHost
+      blockinfile:
+        path: /etc/httpd/conf.d/10-keystone_wsgi_admin.conf
+        insertafter: '.*DocumentRoot "/var/www/cgi-bin/keystone".*'
+        block: |
+          SSLEngine on
+          SSLCertificateFile /etc/pki/tls/certs/os_packstack_cert.pem
+          SSLCertificateKeyFile /etc/pki/tls/private/os_packstack_key.pem
+          SSLCACertificateFile /etc/pki/tls/certs/os_packstack_cacert.pem
+      notify:
+        - restart apache
+
+    - name: Configure HTTPS in Keystone main VHost
+      blockinfile:
+        path: /etc/httpd/conf.d/10-keystone_wsgi_main.conf
+        insertafter: '.*DocumentRoot "/var/www/cgi-bin/keystone".*'
+        block: |
+          SSLEngine on
+          SSLCertificateFile /etc/pki/tls/certs/os_packstack_cert.pem
+          SSLCertificateKeyFile /etc/pki/tls/private/os_packstack_key.pem
+          SSLCACertificateFile /etc/pki/tls/certs/os_packstack_cacert.pem
       notify:
         - restart apache
 
