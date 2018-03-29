@@ -16,7 +16,11 @@ Based on:
 
 ## Using
 
- * Prerequisites: a user having password-less sudo access (here the local user)
+ * Prerequisites
+  * a VM with CentOS 7
+  * an ssh access with a user having password-less sudo (here the local user)
+  * a public IP registered with a FQDN
+  * a certificate with its key and CA files
 
 ```sh
 ansible-playbook packstack.yaml -i inventory.ini -u $(whoami)
