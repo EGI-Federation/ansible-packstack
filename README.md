@@ -12,6 +12,7 @@ Based on:
   * Federated Cloud (Keystone-VOMS, OOI) setup
     * https://wiki.egi.eu/wiki/Federated_Cloud_Ocata_guide
     * https://keystone-voms.readthedocs.io/en/stable-newton/configuration.html
+    * http://ooi.readthedocs.io/en/stable/index.html
 
 ## Using
 
