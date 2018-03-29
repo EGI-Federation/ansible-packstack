@@ -3,6 +3,9 @@
   become: yes
   become_method: sudo
   tasks:
+    - name: Set server hostname
+      hostname: name="{{ server_fqdn }}"
+
     - name: Disable firewalld service
       systemd: name=firewalld enabled=no state=stopped
 
