@@ -113,6 +113,14 @@
       shell: source /root/keystonerc_admin && openstack endpoint create --region RegionOne occi public https://{{ server_fqdn }}:8787/occi1.1
       when: occi_endpoint.stdout == "0"
 
+    - name: Open OCCI port
+      iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: 8787
+        jump: ACCEPT
+        rule_number: 2
+
     - debug:
         msg: 'TODO: Path /usr/lib/python2.7/site-packages/nova/conf/service.py to add ooi in enabled_apis'
 
