@@ -26,6 +26,9 @@ Based on:
   * a certificate with its key and CA files
 
 ```sh
+# Configure Ansible remote host
+cp inventory.ini.sample inventory.ini
+vim inventory.ini
 # Install usual CLI tools
 ansible-playbook weapons.yaml -i inventory.ini -u $(whoami)
 # Install and Packstack
@@ -64,18 +67,21 @@ curl -H "x-auth-token: $OS_TOKEN" 'http://XXX.XXX.XXX.XXX:8787/occi1.1/-/'
 
 ## Troubleshooting
 
-In case of problems with installing/updating python-urllib3:
+When running the `packstack.yaml` playbook In case of problems during the
+system update after the OpenStack repository configuration you may have errors
+related to updating python-urllib3 and to files unknown to the RPM database:
 
 ```sh
 (...)
 Error unpacking rpm package python2-urllib3-1.16-1.el7.noarch
 error: unpacking of archive failed on file /usr/lib/python2.7/site-packages/urllib3/packages/ssl_match_hostname: cpio: rename
 (...)
-
 % ls /usr/lib/python2.7/site-packages/urllib3/packages/
 backports    ordered_dict.py  six.pyc  ssl_match_hostname           ssl_match_hostname;5aba127b  ssl_match_hostname;5aba12e7
 __init__.py  six.py           six.pyo  ssl_match_hostname;5aba09c7  ssl_match_hostname;5aba12a0
 ```
+
+In that case it's possible to clear the files and relaunch the update:
 
 ```sh
 sudo yum remove -y python-urllib3
