@@ -67,6 +67,14 @@
       notify:
         - restart apache
 
+    - name: Fix HTTPS VHost for Horizon
+      replace:
+        path: /etc/httpd/conf.d/15-horizon_ssl_vhost.conf
+        regexp: 'vnode-0\.localdomain'
+        replace: "{{ server_fqdn }}"
+      notify:
+        - restart apache
+
   handlers:
     - name: restart apache
       service: name=httpd state=restarted
