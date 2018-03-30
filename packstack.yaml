@@ -90,6 +90,255 @@
       notify:
         - restart apache
 
+    - name: Enable HTTPS for Keystone
+      ini_file:
+        path: /etc/keystone/keystone.conf
+        section: ssl
+        option: enable
+        value: True
+        backup: yes
+      notify:
+        - restart apache
+
+    - name: Configure SSL ca_certs for Keystone
+      ini_file:
+        path: /etc/keystone/keystone.conf
+        section: ssl
+        option: ca_certs
+        value: /etc/pki/tls/certs/os_packstack_cacert.pem
+        backup: yes
+      notify:
+        - restart apache
+
+    - name: Configure SSL certfile for Keystone
+      ini_file:
+        path: /etc/keystone/keystone.conf
+        section: ssl
+        option: certfile
+        value: /etc/pki/tls/certs/os_packstack_cert.pem
+        backup: yes
+      notify:
+        - restart apache
+
+    - name: Configure SSL keyfile for Keystone
+      ini_file:
+        path: /etc/keystone/keystone.conf
+        section: ssl
+        option: keyfile
+        value: /etc/pki/tls/private/os_packstack_key.pem
+        backup: yes
+      notify:
+        - restart apache
+
+    - name: Update servername in Keystone admin VHost
+      lineinfile:
+        dest: /etc/httpd/conf.d/10-keystone_wsgi_admin.conf
+        regexp: '^(\s+)ServerName vnode-0.localdomain$'
+        line: '\1ServerName {{ server_fqdn }}'
+        backrefs: yes
+      notify:
+        - restart apache
+
+    - name: Update servername in Keystone main VHost
+      lineinfile:
+        dest: /etc/httpd/conf.d/10-keystone_wsgi_main.conf
+        regexp: '^(\s+)ServerName vnode-0.localdomain'
+        line: '\1ServerName {{ server_fqdn }}'
+        backrefs: yes
+      notify:
+        - restart apache
+
+    - name: Configure HTTPS in Keystone admin VHost
+      blockinfile:
+        path: /etc/httpd/conf.d/10-keystone_wsgi_admin.conf
+        insertafter: '.*DocumentRoot "/var/www/cgi-bin/keystone".*'
+        block: |
+          SSLEngine on
+          SSLCertificateFile /etc/pki/tls/certs/os_packstack_cert.pem
+          SSLCertificateKeyFile /etc/pki/tls/private/os_packstack_key.pem
+          SSLCACertificateFile /etc/pki/tls/certs/os_packstack_cacert.pem
+      notify:
+        - restart apache
+
+    - name: Configure HTTPS in Keystone main VHost
+      blockinfile:
+        path: /etc/httpd/conf.d/10-keystone_wsgi_main.conf
+        insertafter: '.*DocumentRoot "/var/www/cgi-bin/keystone".*'
+        block: |
+          SSLEngine on
+          SSLCertificateFile /etc/pki/tls/certs/os_packstack_cert.pem
+          SSLCertificateKeyFile /etc/pki/tls/private/os_packstack_key.pem
+          SSLCACertificateFile /etc/pki/tls/certs/os_packstack_cacert.pem
+      notify:
+        - restart apache
+
+    - name: Enable HTTPS for Keystone in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: keystone_authtoken
+        option: auth_uri
+        value: https://{{ server_fqdn }}:5000/
+        backup: yes
+      notify:
+        - restart nova-compute
+
+    - name: Enable HTTPS auth_url for keystone in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: keystone_authtoken
+        option: auth_url
+        value: https://{{ server_fqdn }}:35357
+        backup: yes
+      notify:
+        - restart nova-compute
+
+    - name: Enable HTTPS for Glance in glance-api.conf
+      ini_file:
+        path: /etc/glance/glance-api.conf
+        section: keystone_authtoken
+        option: auth_uri
+        value: https://{{ server_fqdn }}:5000/v3
+        backup: yes
+      notify:
+        - restart glance-api
+
+    - name: Enable HTTPS auth_url for Glance in glance-api.conf
+      ini_file:
+        path: /etc/glance/glance-api.conf
+        section: keystone_authtoken
+        option: auth_url
+        value: https://{{ server_fqdn }}:35357
+        backup: yes
+      notify:
+        - restart glance-api
+
+    - name: Enable HTTPS for Glance in glance-registry.conf
+      ini_file:
+        path: /etc/glance/glance-registry.conf
+        section: keystone_authtoken
+        option: auth_uri
+        value: https://{{ server_fqdn }}:5000/v3
+        backup: yes
+      notify:
+        - restart glance-registry
+
+    - name: Enable HTTPS auth_url for Glance in glance-registry.conf
+      ini_file:
+        path: /etc/glance/glance-registry.conf
+        section: keystone_authtoken
+        option: auth_url
+        value: https://{{ server_fqdn }}:35357
+        backup: yes
+      notify:
+        - restart glance-registry
+
+    - name: Enable HTTPS for Neutron in neutron.conf
+      ini_file:
+        path: /etc/neutron/neutron.conf
+        section: keystone_authtoken
+        option: auth_uri
+        value: https://{{ server_fqdn }}:5000/v3
+        backup: yes
+      notify:
+        - restart neutron
+
+    - name: Enable HTTPS auth_url for Neutron in neutron.conf
+      ini_file:
+        path: /etc/neutron/neutron.conf
+        section: keystone_authtoken
+        option: auth_url
+        value: https://{{ server_fqdn }}:35357
+        backup: yes
+      notify:
+        - restart neutron
+
+    - name: Enable HTTPS for Keystone in horizon settings
+      lineinfile:
+        dest: /etc/openstack-dashboard/local_settings
+        regexp: '^OPENSTACK_KEYSTONE_URL'
+        line: 'OPENSTACK_KEYSTONE_URL = "https://{{ server_fqdn }}:5000/v3"'
+        backup: yes
+      notify:
+        - restart apache
+
+    - name: Set ca_file for HTTPS for nova in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: ssl
+        option: ca_file
+        value: /etc/pki/tls/certs/os_packstack_cacert.pem
+        backup: yes
+      notify:
+        - restart nova-compute
+
+    - name: Set cert_file for HTTPS for nova in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: ssl
+        option: cert_file
+        value: /etc/pki/tls/certs/os_packstack_cert.pem
+        backup: yes
+      notify:
+        - restart nova-compute
+
+    - name: Set key_file for HTTPS for nova in nova.conf
+      ini_file:
+        path: /etc/nova/nova.conf
+        section: ssl
+        option: key_file
+        value: /etc/pki/tls/private/os_packstack_key.pem
+        backup: yes
+      notify:
+        - restart nova-compute
+
+    - name: Look for HTTPS 5000/v2.0 url
+      shell: mysql keystone -s -N -e 'select url from endpoint where url LIKE "http://%5000/v2.0"' | wc -l
+      register: https_5000_v20
+      changed_when: False
+
+    - name: Update 5000/v2.0 endpoints in Keystone database
+      shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:5000/v2.0' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5000/v2.0';"
+      when: https_5000_v20.stdout != '0'
+
+    - name: Look for HTTPS 35357/v2.0 url
+      shell: mysql keystone -s -N -e 'select url from endpoint where url LIKE "http://%35357/v2.0"' | wc -l
+      register: https_35357_v20
+      changed_when: False
+
+    - name: Update 35357/v2.0 endpoints in Keystone database
+      shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:35357/v2.0' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:35357/v2.0';"
+      when: https_35357_v20.stdout != '0'
+
+    - name: Look for HTTPS 5000/v3 url
+      shell: mysql keystone -s -N -e 'select url from endpoint where url LIKE "http://%5000/v3"' | wc -l
+      register: https_5000_v3
+      changed_when: False
+
+    - name: Update 5000/v3 endpoints in Keystone database
+      shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:5000/v3' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5000/v3';"
+      when: https_5000_v3.stdout != '0'
+
+    - name: Look for HTTPS 35357/v3 url
+      shell: mysql keystone -s -N -e 'select url from endpoint where url LIKE "http://%35357/v3"' | wc -l
+      register: https_35357_v3
+      changed_when: False
+
+    - name: Update 35357/v3 endpoints in Keystone database
+      shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:35357/v3' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:35357/v3';"
+      when: https_35357_v3.stdout != '0'
+
   handlers:
     - name: restart apache
       service: name=httpd state=restarted
+
+    - name: restart nova-compute
+      service: name=openstack-nova-compute state=restarted
+
+    - name: restart glance-api
+      service: name=openstack-glance-api state=restarted
+
+    - name: restart glance-registry
+      service: name=openstack-glance-registry state=restarted
+
+    - name: restart neutron
+      service: name=neutron-server state=restarted
