@@ -48,15 +48,12 @@
           path: /etc/pki/tls/private/os_packstack_key.pem
           mode: '0600'
 
-    # XXX See how SSL and httpd conf can be done
     # XXX Should we use a answer file as a template?
-    #     - name: Execute packstck installer
-    #       #command: packstack --allinone --os-horizon-ssl=y --os-ssl-cert=/etc/pki/tls/certs/os_packstack_cert.pem --os-ssl-key=/etc/pki/tls/private/os_packstack_key.pem --os-ssl-cachain=/etc/pki/tls/certs/os_packstack_cacert.pem --ssl-cacert-selfsign=n --nova-ssl-cert=/etc/pki/tls/certs/os_packstack_cert.pem --nova-ssl-key=/etc/pki/tls/private/os_packstack_key.pem
-    #       command: packstack --allinone --os-horizon-ssl=y
-    #       args:
-    #         chdir: '/root'
-    #         creates: '/root/keystonerc_admin'
-    #  - http->https redirection in /etc/httpd/conf.d/15-horizon_vhost.conf
+    - name: Execute packstck installer
+      command: packstack --allinone --os-horizon-ssl=y --os-ssl-cert=/etc/pki/tls/certs/os_packstack_cert.pem --os-ssl-key=/etc/pki/tls/private/os_packstack_key.pem --os-ssl-cachain=/etc/pki/tls/certs/os_packstack_cacert.pem --ssl-cacert-selfsign=n --nova-ssl-cert=/etc/pki/tls/certs/os_packstack_cert.pem --nova-ssl-key=/etc/pki/tls/private/os_packstack_key.pem
+      args:
+        chdir: '/root'
+        creates: '/root/keystonerc_admin'
 
     # XXX Shouldn't be required if packstack is used appropriately
     - name: Fix HTTP to HTTPS redirection for Horizon
