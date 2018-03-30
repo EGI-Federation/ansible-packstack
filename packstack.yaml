@@ -313,14 +313,14 @@
       lineinfile:
         dest: /root/keystonerc_admin
         regexp: '^\s*export OS_AUTH_URL'
-        line: 'export OS_AUTH_URL = "https://{{ server_fqdn }}:5000/v3"'
+        line: 'export OS_AUTH_URL="https://{{ server_fqdn }}:5000/v3"'
         backup: yes
 
     - name: Update Keystone endpoint in demo user client conf
       lineinfile:
         dest: /root/keystonerc_demo
         regexp: '^\s*export OS_AUTH_URL'
-        line: 'export OS_AUTH_URL = "https://{{ server_fqdn }}:5000/v3"'
+        line: 'export OS_AUTH_URL="https://{{ server_fqdn }}:5000/v3"'
         backup: yes
 
     - name: Copy client configurations to non-root user
