@@ -25,7 +25,14 @@ Based on:
   * a certificate with its key and CA files
 
 ```sh
+# Install usual CLI tools
+ansible-playbook weapons.yaml -i inventory.ini -u $(whoami)
+# Install and Packstack
 ansible-playbook packstack.yaml -i inventory.ini -u $(whoami)
+# Enable Keystone VOMS support
+ansible-playbook keystone_voms.yaml -i inventory.ini -u $(whoami)
+# Install OOI for OCCI endpoint
+ansible-playbook ooi.yaml -i inventory.ini -u $(whoami)
 ```
 
 ## Testing
@@ -38,7 +45,7 @@ It can be easy to test using a docke wrapper.
 $ cat ~/.stack/my_site
 export OS_USERNAME=admin
 export OS_PASSWORD=XXXXXXXXXX
-export OS_AUTH_URL=http://XXX.XXX.XXX.XXX:5000/v3
+export OS_AUTH_URL=https://XXX.XXX.XXX.XXX:5000/v3
 export OS_PROJECT_NAME=admin
 export OS_USER_DOMAIN_NAME=Default
 export OS_PROJECT_DOMAIN_NAME=Default
