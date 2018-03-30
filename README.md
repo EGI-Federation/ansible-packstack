@@ -4,12 +4,13 @@ Deploying a packstack-based OpenStack test instance using Ansible.
 
 Based on:
 
-  * Packstack setup
+  * Packstack and OpenStack setup
     * https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux_OpenStack_Platform/2/html/Getting_Started_Guide/part-Deploying_OS_using_PackStack.html
     * https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/
     * https://www.tecmint.com/openstack-installation-guide-rhel-centos/
     * https://linuxacademy.com/howtoguides/posts/show/topic/12453-deploying-openstack-rdo-allinone-vm-for-multidomain-support
     * https://docs.openstack.org/security-guide/secure-communication.html
+    * https://github.com/gbraad/dockerfile-openstack-client
   * Federated Cloud (Keystone-VOMS, OOI) setup
     * https://wiki.egi.eu/wiki/Federated_Cloud_Ocata_guide
     * https://keystone-voms.readthedocs.io/en/stable-newton/configuration.html
@@ -53,7 +54,12 @@ export OS_IDENTITY_API_VERSION=3
 ```
 
 ```sh
+# Listing available images
 docker run -it --rm -v ~/.stack:/root/.stack gbraad/openstack-client:centos stack my_site openstack image list
+# Retrieving a Keystone token
+OS_TOKEN=$(docker run -it --rm -v ~/.stack:/root/.stack gbraad/openstack-client:centos stack my_site openstack token issue -f value -c id)
+# Testing OOI/OCCI endpoint
+curl -H "x-auth-token: $OS_TOKEN" 'http://XXX.XXX.XXX.XXX:8787/occi1.1/-/'
 ```
 
 ## Troubleshooting
