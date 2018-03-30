@@ -75,6 +75,24 @@
       notify:
         - restart apache
 
+    - name: Enable secure CSRF cookie for HTTPS in horizon settings
+      lineinfile:
+        dest: /etc/openstack-dashboard/local_settings
+        regexp: '^#CSRF_COOKIE_SECURE'
+        line: 'CSRF_COOKIE_SECURE = True'
+        backup: yes
+      notify:
+        - restart apache
+
+    - name: Enable secure session cookie for HTTPS in horizon settings
+      lineinfile:
+        dest: /etc/openstack-dashboard/local_settings
+        regexp: '^#SESSION_COOKIE_SECURE'
+        line: 'SESSION_COOKIE_SECURE = True'
+        backup: yes
+      notify:
+        - restart apache
+
   handlers:
     - name: restart apache
       service: name=httpd state=restarted
