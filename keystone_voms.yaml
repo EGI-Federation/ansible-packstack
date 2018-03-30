@@ -215,6 +215,26 @@
       notify:
         - restart glance-registry
 
+    - name: Enable HTTPS for Neutron in neutron.conf
+      ini_file:
+        path: /etc/neutron/neutron.conf
+        section: keystone_authtoken
+        option: auth_uri
+        value: https://{{ server_fqdn }}:5000/v3
+        backup: yes
+      notify:
+        - restart neutron
+
+    - name: Enable HTTPS auth_url for Neutron in neutron.conf
+      ini_file:
+        path: /etc/neutron/neutron.conf
+        section: keystone_authtoken
+        option: auth_url
+        value: https://{{ server_fqdn }}:35357
+        backup: yes
+      notify:
+        - restart neutron
+
     - name: Set ca_file for HTTPS for nova in nova.conf
       ini_file:
         path: /etc/nova/nova.conf
@@ -293,3 +313,6 @@
 
     - name: restart glance-registry
       service: name=openstack-glance-registry state=restarted
+
+    - name: restart neutron
+      service: name=neutron-server state=restarted
