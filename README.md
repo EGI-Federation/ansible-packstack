@@ -4,14 +4,14 @@ Deploying a packstack-based OpenStack test instance using Ansible.
 
 Based on:
 
-  * Packstack and OpenStack setup
+  * Packstack and OpenStack
     * https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux_OpenStack_Platform/2/html/Getting_Started_Guide/part-Deploying_OS_using_PackStack.html
     * https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/
     * https://www.tecmint.com/openstack-installation-guide-rhel-centos/
     * https://linuxacademy.com/howtoguides/posts/show/topic/12453-deploying-openstack-rdo-allinone-vm-for-multidomain-support
     * https://docs.openstack.org/security-guide/secure-communication.html
     * https://github.com/gbraad/dockerfile-openstack-client
-  * Federated Cloud (Keystone-VOMS, OOI) setup
+  * Federated Cloud (Keystone-VOMS, OOI)
     * https://wiki.egi.eu/wiki/Federated_Cloud_Ocata_guide
     * https://keystone-voms.readthedocs.io/en/stable-newton/configuration.html
     * http://ooi.readthedocs.io/en/stable/index.html
@@ -41,9 +41,10 @@ ansible-playbook ooi.yaml -i inventory.ini -u $(whoami)
 
 ## Testing
 
-It can be easy to test using a docke wrapper.
+It can be easy to test using a docker wrapper.
 
-* Copy `/root/keystonerc_admin` or `/root/keystonerc_demo` configuratio to a site-specific file in `~/.stack` directory
+Copy `/root/keystonerc_admin` or `/root/keystonerc_demo` configuration to a
+site-specific file in `~/.stack` directory
 
 ```sh
 $ cat ~/.stack/my_site
