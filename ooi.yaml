@@ -109,8 +109,9 @@
       changed_when: False
       register: occi_endpoint
 
+    # XXX To be replaced by an HTTPS endpoint
     - name: Create OCCI endpoint
-      shell: source /root/keystonerc_admin && openstack endpoint create --region RegionOne occi public https://{{ server_fqdn }}:8787/occi1.1
+      shell: source /root/keystonerc_admin && openstack endpoint create --region RegionOne occi public http://{{ server_fqdn }}:8787/occi1.1
       when: occi_endpoint.stdout == "0"
 
     - name: Open OCCI port in iptables
