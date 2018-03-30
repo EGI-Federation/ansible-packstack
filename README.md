@@ -9,10 +9,12 @@ Based on:
     * https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/
     * https://www.tecmint.com/openstack-installation-guide-rhel-centos/
     * https://linuxacademy.com/howtoguides/posts/show/topic/12453-deploying-openstack-rdo-allinone-vm-for-multidomain-support
+    * https://docs.openstack.org/security-guide/secure-communication.html
   * Federated Cloud (Keystone-VOMS, OOI) setup
     * https://wiki.egi.eu/wiki/Federated_Cloud_Ocata_guide
     * https://keystone-voms.readthedocs.io/en/stable-newton/configuration.html
     * http://ooi.readthedocs.io/en/stable/index.html
+    * https://wiki.infn.it/progetti/cloud-areapd/egi_federated_cloud/newton-centos7_testbed
 
 ## Using
 
