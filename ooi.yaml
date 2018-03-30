@@ -113,16 +113,24 @@
       shell: source /root/keystonerc_admin && openstack endpoint create --region RegionOne occi public https://{{ server_fqdn }}:8787/occi1.1
       when: occi_endpoint.stdout == "0"
 
-    - name: Open OCCI port
-      iptables:
-        chain: INPUT
-        protocol: tcp
-        destination_port: 8787
-        jump: ACCEPT
-        rule_number: 2
+    - name: Open OCCI port in iptables
+      lineinfile:
+        dest: /etc/sysconfig/iptables
+        line: '-A INPUT -p tcp -m state --state NEW -m tcp --dport 8787 -j ACCEPT'
+        insertafter: '-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT'
+      notify:
+        - restart iptables
 
-    - debug:
-        msg: 'TODO: Path /usr/lib/python2.7/site-packages/nova/conf/service.py to add ooi in enabled_apis'
+    # XXX Patch as in ocata the API list is strictly limited
+    - name: 'Patch /usr/lib/python2.7/site-packages/nova/conf/service.py to add ooi choice in enabled_apis'
+      lineinfile:
+        dest: /usr/lib/python2.7/site-packages/nova/conf/service.py
+        regexp: "(\\s+)('metadata']\\),)"
+        line: "\\1'ooi',\\2"
+        backrefs: true
+        backup: true
+      notify:
+        - restart nova-compute
 
   handlers:
     - name: restart nova-api
@@ -130,3 +138,6 @@
 
     - name: restart nova-compute
       service: name=openstack-nova-compute state=restarted
+
+    - name: restart iptables
+      service: name=iptables state=restarted
