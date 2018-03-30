@@ -235,6 +235,15 @@
       notify:
         - restart neutron
 
+    - name: Enable HTTPS for Keystone in horizon settings
+      lineinfile:
+        dest: /etc/openstack-dashboard/local_settings
+        regexp: '^OPENSTACK_KEYSTONE_URL'
+        line: 'OPENSTACK_KEYSTONE_URL = "https://{{ server_fqdn }}:5000/v3"'
+        backup: yes
+      notify:
+        - restart apache
+
     - name: Set ca_file for HTTPS for nova in nova.conf
       ini_file:
         path: /etc/nova/nova.conf
