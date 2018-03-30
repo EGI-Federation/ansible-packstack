@@ -31,7 +31,7 @@ cp inventory.ini.sample inventory.ini
 vim inventory.ini
 # Install usual CLI tools
 ansible-playbook weapons.yaml -i inventory.ini -u $(whoami)
-# Install and Packstack
+# Install and run Packstack, configure HTTPS for Horizon and Keystone
 ansible-playbook packstack.yaml -i inventory.ini -u $(whoami)
 # Enable Keystone VOMS support
 ansible-playbook keystone_voms.yaml -i inventory.ini -u $(whoami)
