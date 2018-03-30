@@ -6,6 +6,9 @@
     - name: Set server hostname
       hostname: name="{{ server_fqdn }}"
 
+    - name: Install updates
+      yum: name=* state=latest update_cache=yes
+
     - name: Disable firewalld service
       systemd: name=firewalld enabled=no state=stopped
 
@@ -24,7 +27,7 @@
     - name: Install OpenStack {{ os_release }} repository
       yum: name=centos-release-openstack-{{ os_release }} state=installed
 
-    - name: Install updates
+    - name: Install updates including Openstack repositories
       yum: name=* state=latest update_cache=yes
 
     - name: Install packstack installer
@@ -48,34 +51,42 @@
           path: /etc/pki/tls/private/os_packstack_key.pem
           mode: '0600'
 
-    # XXX Should we use a answer file as a template?
+    # XXX Should we use an answer file as a template?
     - name: Execute packstck installer
       command: packstack --allinone --os-horizon-ssl=y --os-ssl-cert=/etc/pki/tls/certs/os_packstack_cert.pem --os-ssl-key=/etc/pki/tls/private/os_packstack_key.pem --os-ssl-cachain=/etc/pki/tls/certs/os_packstack_cacert.pem --ssl-cacert-selfsign=n --nova-ssl-cert=/etc/pki/tls/certs/os_packstack_cert.pem --nova-ssl-key=/etc/pki/tls/private/os_packstack_key.pem
       args:
         chdir: '/root'
         creates: '/root/keystonerc_admin'
 
-    # XXX Shouldn't be required if packstack is used appropriately
+    - name: Fix HTTP VHost for Horizon
+      replace:
+        path: /etc/httpd/conf.d/15-horizon_vhost.conf
+        regexp: '^(\s+RedirectMatch permanent.*https://).*$'
+        replace: '\1{{ server_fqdn }}'
+      notify:
+        - restart apache
+
     - name: Fix HTTP to HTTPS redirection for Horizon
       replace:
         path: /etc/httpd/conf.d/15-horizon_vhost.conf
-        regexp: 'vnode-0\.localdomain'
-        replace: "{{ server_fqdn }}"
+        regexp: '^(\s+ServerName ).*'
+        replace: '\1{{ server_fqdn }}'
       notify:
         - restart apache
 
     - name: Fix HTTPS VHost for Horizon
       replace:
         path: /etc/httpd/conf.d/15-horizon_ssl_vhost.conf
-        regexp: 'vnode-0\.localdomain'
-        replace: "{{ server_fqdn }}"
+        regexp: '^(\s+ServerName ).*'
+        replace: '\1{{ server_fqdn }}'
       notify:
         - restart apache
 
     - name: Enable secure CSRF cookie for HTTPS in horizon settings
       lineinfile:
         dest: /etc/openstack-dashboard/local_settings
-        regexp: '^#CSRF_COOKIE_SECURE'
+        regexp: '^CSRF_COOKIE_SECURE'
+        insertafter: '^#CSRF_COOKIE_SECURE'
         line: 'CSRF_COOKIE_SECURE = True'
         backup: yes
       notify:
@@ -84,48 +95,9 @@
     - name: Enable secure session cookie for HTTPS in horizon settings
       lineinfile:
         dest: /etc/openstack-dashboard/local_settings
-        regexp: '^#SESSION_COOKIE_SECURE'
+        regexp: '^SESSION_COOKIE_SECURE'
+        insertafter: '^#SESSION_COOKIE_SECURE'
         line: 'SESSION_COOKIE_SECURE = True'
-        backup: yes
-      notify:
-        - restart apache
-
-    - name: Enable HTTPS for Keystone
-      ini_file:
-        path: /etc/keystone/keystone.conf
-        section: ssl
-        option: enable
-        value: True
-        backup: yes
-      notify:
-        - restart apache
-
-    - name: Configure SSL ca_certs for Keystone
-      ini_file:
-        path: /etc/keystone/keystone.conf
-        section: ssl
-        option: ca_certs
-        value: /etc/pki/tls/certs/os_packstack_cacert.pem
-        backup: yes
-      notify:
-        - restart apache
-
-    - name: Configure SSL certfile for Keystone
-      ini_file:
-        path: /etc/keystone/keystone.conf
-        section: ssl
-        option: certfile
-        value: /etc/pki/tls/certs/os_packstack_cert.pem
-        backup: yes
-      notify:
-        - restart apache
-
-    - name: Configure SSL keyfile for Keystone
-      ini_file:
-        path: /etc/keystone/keystone.conf
-        section: ssl
-        option: keyfile
-        value: /etc/pki/tls/private/os_packstack_key.pem
         backup: yes
       notify:
         - restart apache
@@ -133,8 +105,8 @@
     - name: Update servername in Keystone admin VHost
       lineinfile:
         dest: /etc/httpd/conf.d/10-keystone_wsgi_admin.conf
-        regexp: '^(\s+)ServerName vnode-0.localdomain$'
-        line: '\1ServerName {{ server_fqdn }}'
+        regexp: '^(\s+ServerName ).*'
+        line: '\1{{ server_fqdn }}'
         backrefs: yes
       notify:
         - restart apache
@@ -142,8 +114,8 @@
     - name: Update servername in Keystone main VHost
       lineinfile:
         dest: /etc/httpd/conf.d/10-keystone_wsgi_main.conf
-        regexp: '^(\s+)ServerName vnode-0.localdomain'
-        line: '\1ServerName {{ server_fqdn }}'
+        regexp: '^(\s+ServerName ).*'
+        line: '\1{{ server_fqdn }}'
         backrefs: yes
       notify:
         - restart apache
@@ -169,6 +141,16 @@
           SSLCertificateFile /etc/pki/tls/certs/os_packstack_cert.pem
           SSLCertificateKeyFile /etc/pki/tls/private/os_packstack_key.pem
           SSLCACertificateFile /etc/pki/tls/certs/os_packstack_cacert.pem
+      notify:
+        - restart apache
+
+    - name: Enable HTTPS for Keystone
+      ini_file:
+        path: /etc/keystone/keystone.conf
+        section: ssl
+        option: enable
+        value: True
+        backup: yes
       notify:
         - restart apache
 
@@ -326,6 +308,32 @@
     - name: Update 35357/v3 endpoints in Keystone database
       shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:35357/v3' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:35357/v3';"
       when: https_35357_v3.stdout != '0'
+
+    - name: Update Keystone endpoint in admin user client conf
+      lineinfile:
+        dest: /root/keystonerc_admin
+        regexp: '^\s*export OS_AUTH_URL'
+        line: 'export OS_AUTH_URL = "https://{{ server_fqdn }}:5000/v3"'
+        backup: yes
+
+    - name: Update Keystone endpoint in demo user client conf
+      lineinfile:
+        dest: /root/keystonerc_demo
+        regexp: '^\s*export OS_AUTH_URL'
+        line: 'export OS_AUTH_URL = "https://{{ server_fqdn }}:5000/v3"'
+        backup: yes
+
+    - name: Copy client configurations to non-root user
+      copy:
+        remote_src: yes
+        src: '{{ item.src }}'
+        dest: "/home/{{ ansible_user }}/"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0640'
+      with_items:
+        - src: '/root/keystonerc_admin'
+        - src: '/root/keystonerc_demo'
 
   handlers:
     - name: restart apache
