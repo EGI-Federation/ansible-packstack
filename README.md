@@ -36,6 +36,8 @@ ansible-playbook weapons.yaml -i inventory.ini -u $(whoami)
 # Install and run Packstack, configure HTTPS for Horizon and Keystone
 ansible-playbook packstack.yaml -i inventory.ini -u $(whoami)
 # Once this is done it's recommended to reboot the server
+# Create default OpenStack projects
+ansible-playbook projects.yaml -i inventory.ini -u $(whoami)
 # Enable Keystone VOMS support
 ansible-playbook keystone_voms.yaml -i inventory.ini -u $(whoami)
 # Install OOI for OCCI endpoint
