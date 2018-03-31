@@ -1,5 +1,6 @@
 ---
 - hosts: packstack
+  gather_facts: yes
   become: yes
   become_method: sudo
   tasks:
@@ -7,7 +8,9 @@
       hostname: name="{{ server_fqdn }}"
 
     - name: Install updates
-      yum: name=* state=latest update_cache=yes
+      package: name=* state=latest update_cache=yes
+      tags:
+        - skip_ansible_lint
 
     - name: Disable firewalld service
       systemd: name=firewalld enabled=no state=stopped
@@ -26,11 +29,7 @@
 
     - name: Install OpenStack {{ os_release }} repository
       yum: name=centos-release-openstack-{{ os_release }} state=installed
-      register: install_openstack_repo
-
-    - name: Install updates including Openstack repositories
-      yum: name=* state=latest update_cache=yes
-      when: install_openstack_repo.changed
+      notify: install updates
 
     - name: Install packstack installer
       yum: name=openstack-packstack state=installed
@@ -415,3 +414,8 @@
 
     - name: restart neutron
       service: name=neutron-server state=restarted
+
+    - name: install updates
+      package: name=* state=latest update_cache=yes
+      tags:
+        - skip_ansible_lint

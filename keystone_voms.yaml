@@ -1,6 +1,5 @@
 ---
 - hosts: packstack
-  gather_facts: no
   become: yes
   become_method: sudo
   tasks:

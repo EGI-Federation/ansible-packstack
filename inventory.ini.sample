@@ -1,6 +1,9 @@
-[local]
-127.0.0.1 ansible_connection=local ansible_python_interpreter="/usr/bin/env python" server_fqdn=packstack.domain.tld
+[all:vars]
+server_fqdn=packstack.domain.tld
 
-# Lists of hosts where packstack will be deployed
+[local]
+127.0.0.1 ansible_connection=local ansible_python_interpreter="/usr/bin/env python"
+
+# Hosts where packstack will be deployed
 [packstack]
-XXX.XXX.XXX.XXX os_release=ocata ssl_cacert=./path/to/ssl_cacert.crt ssl_cert=./path/to/ssl_cert.crt ssl_key=./path/to/ssl_cert.key server_fqdn=packstack.domain.tld
+XXX.XXX.XXX.XXX os_release=ocata ssl_cacert=./path/to/ssl_cacert.crt ssl_cert=./path/to/ssl_cert.crt ssl_key=./path/to/ssl_cert.key
