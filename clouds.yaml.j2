@@ -1,0 +1,10 @@
+clouds:
+  {{ server_fqdn }}:
+    auth:
+      username: admin
+      project_name: admin
+      password: {{ openstack_admin_pass.stdout }}
+      auth_url: https://{{ server_fqdn }}:5000/v3
+      user_domain_name: default
+      project_domain_name: default
+    identity_api_version: 3
