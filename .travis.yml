@@ -15,6 +15,7 @@ python:
 
 install:
   - pip install ansible shade shade-ansible
+  # - pip install shade shade-ansible
   - pip install ansible-lint
   - pip install yamllint
 
