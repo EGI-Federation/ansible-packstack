@@ -8,111 +8,116 @@
       yum_repository:
         name: ooi-centos-7-x86_6
         description: Repository for OOI
-        baseurl: "http://repository.egi.eu/community/software/ooi/occi-1.1/releases/centos/7/x86_64/RPMS/"
+        baseurl: http://repository.egi.eu/community/software/ooi/occi-1.1/releases/centos/7/x86_64/RPMS/
         gpgcheck: no
         gpgkey: http://repository.egi.eu/community/keys/APPDBCOMM-DEB-PGP-KEY.asc
 
     - name: Install OOI
       yum: name=python-ooi state=installed
 
-    - name: Add OCCI filter to nova api-paste.ini
-      ini_file:
-        path: /etc/nova/api-paste.ini
-        section: filter:occi
-        option: paste.filter_factory
-        value: ooi.wsgi:OCCIMiddleware.factory
-        backup: yes
-      notify:
-        - restart nova-api
+    - name: Update nova api-paste.ini for OCCI
+      block:
+        - name: Add OCCI filter to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: filter:occi
+            option: paste.filter_factory
+            value: ooi.wsgi:OCCIMiddleware.factory
+            backup: yes
+          notify:
+            - restart nova-api
+        - name: Add use to OCCI API composite to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: composite:occi_api_11
+            option: use
+            value: call:nova.api.auth:pipeline_factory_v21
+            backup: yes
+          notify:
+            - restart nova-api
+        - name: Add noauth2 to OCCI API composite to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: composite:occi_api_11
+            option: noauth2
+            value: >
+              cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit
+              osprofiler noauth2 occi osapi_compute_app_v21
+            backup: yes
+          notify:
+            - restart nova-api
+        - name: Add keystone to OCCI API composite to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: composite:occi_api_11
+            option: keystone
+            value: >
+              cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit
+              osprofiler authtoken keystonecontext legacy_v2_compatible
+              occi osapi_compute_app_v21
+            backup: yes
+          notify:
+            - restart nova-api
+        - name: Add use to OOI composite to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: composite:ooi
+            option: use
+            value: call:nova.api.openstack.urlmap:urlmap_factory
+            backup: yes
+          notify:
+            - restart nova-api
+        - name: Add occi1.1 to OOI composite to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: composite:ooi
+            option: /occi1.1
+            value: occi_api_11
+            backup: yes
+          notify:
+            - restart nova-api
 
-    - name: Add use to OCCI API composite to nova api-paste.ini
-      ini_file:
-        path: /etc/nova/api-paste.ini
-        section: composite:occi_api_11
-        option: use
-        value: call:nova.api.auth:pipeline_factory_v21
-        backup: yes
-      notify:
-        - restart nova-api
+    - name: Configure OOI in nova.conf
+      block:
+        - name: Enable OOI API in nova.conf
+          ini_file:
+            path: /etc/nova/nova.conf
+            section: DEFAULT
+            option: enabled_apis
+            value: osapi_compute,metadata,ooi
+            backup: yes
+          notify:
+            - restart nova-compute
+        - name: Configure OOI port in nova.conf
+          ini_file:
+            path: /etc/nova/nova.conf
+            section: DEFAULT
+            option: ooi_listen_port
+            value: 8787
+            backup: yes
+          notify:
+            - restart nova-compute
 
-    - name: Add noauth2 to OCCI API composite to nova api-paste.ini
-      ini_file:
-        path: /etc/nova/api-paste.ini
-        section: composite:occi_api_11
-        option: noauth2
-        value: cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit osprofiler noauth2 occi osapi_compute_app_v21
-        backup: yes
-      notify:
-        - restart nova-api
-
-    - name: Add keystone to OCCI API composite to nova api-paste.ini
-      ini_file:
-        path: /etc/nova/api-paste.ini
-        section: composite:occi_api_11
-        option: keystone
-        value: cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit osprofiler authtoken keystonecontext legacy_v2_compatible occi osapi_compute_app_v21
-        backup: yes
-      notify:
-        - restart nova-api
-
-    - name: Add use to OOI composite to nova api-paste.ini
-      ini_file:
-        path: /etc/nova/api-paste.ini
-        section: composite:ooi
-        option: use
-        value: call:nova.api.openstack.urlmap:urlmap_factory
-        backup: yes
-      notify:
-        - restart nova-api
-
-    - name: Add occi1.1 to OOI composite to nova api-paste.ini
-      ini_file:
-        path: /etc/nova/api-paste.ini
-        section: composite:ooi
-        option: /occi1.1
-        value: occi_api_11
-        backup: yes
-      notify:
-        - restart nova-api
-
-    - name: Enable OOI API in nova.conf
-      ini_file:
-        path: /etc/nova/nova.conf
-        section: DEFAULT
-        option: enabled_apis
-        value: osapi_compute,metadata,ooi
-        backup: yes
-      notify:
-        - restart nova-compute
-
-    - name: Configure OOI port in nova.conf
-      ini_file:
-        path: /etc/nova/nova.conf
-        section: DEFAULT
-        option: ooi_listen_port
-        value: 8787
-        backup: yes
-      notify:
-        - restart nova-compute
-
-    - name: Check if OCCI service exists
-      shell: source /root/keystonerc_admin && openstack service list -c Name -f value | { grep -c occi || true; }
-      changed_when: False
-      register: occi_service
-
-    - name: Create OCCI service
-      shell: source /root/keystonerc_admin && openstack service create --name occi --description "OCCI Interface" occi
-      when: occi_service.stdout == "0"
-
-    - name: Check if OCCI endpoint exists
-      shell: source /root/keystonerc_admin && openstack endpoint list -c 'Service Name' -f value | { grep -c occi || true; }
-      changed_when: False
-      register: occi_endpoint
-
-    # XXX To be replaced by an HTTPS endpoint
     - name: Create OCCI endpoint
-      shell: source /root/keystonerc_admin && openstack endpoint create --region RegionOne occi public http://{{ server_fqdn }}:8787/occi1.1
-      when: occi_endpoint.stdout == "0"
+      block:
+        - name: Create OCCI service
+          os_keystone_service:
+            cloud: "{{ server_fqdn }}"
+            state: present
+            name: occi
+            service_type: occi
+            description: OCCI interface
+        # XXX To be replaced by an HTTPS endpoint
+        - name: Create OCCI endpoint for OOI
+          os_keystone_endpoint:
+            cloud: "{{ server_fqdn }}"
+            service: occi
+            endpoint_interface: public
+            url: http://{{ server_fqdn }}:8787/occi1.1
+            region: RegionOne
+            state: present
+      delegate_to: localhost
+      become: no
 
     - name: Open OCCI port in iptables
       lineinfile:
@@ -123,7 +128,9 @@
         - restart iptables
 
     # XXX Patch as in ocata the API list is strictly limited
-    - name: 'Patch /usr/lib/python2.7/site-packages/nova/conf/service.py to add ooi choice in enabled_apis'
+    - name: >
+        'Patch /usr/lib/python2.7/site-packages/nova/conf/service.py
+        to add ooi choice in enabled_apis'
       lineinfile:
         dest: /usr/lib/python2.7/site-packages/nova/conf/service.py
         regexp: "(\\s+)('metadata']\\),)"
