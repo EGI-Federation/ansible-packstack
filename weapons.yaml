@@ -12,6 +12,9 @@
     - name: Ensure tree is installed
       yum: name=tree state=installed
 
+    - name: Ensure htop is installed
+      yum: name=htop state=installed enablerepo=epel
+
     - name: Ensure Zsh is installed
       yum: name=zsh state=installed
 
