@@ -33,4 +33,22 @@
 
     - name: Copy .zshrc template
       command: cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
+      args:
+        creates: ~/.zshrc
+      become: no
+
+    - name: Enable tmux plugin
+      lineinfile:
+        dest: ~/.zshrc
+        insertafter: '^plugins='
+        line: '  tmux'
+        backup: yes
+      become: no
+
+    - name: Enable tmux autostart
+      lineinfile:
+        dest: ~/.zshrc
+        insertafter: '^# ZSH_CUSTOM'
+        line: 'export ZSH_TMUX_AUTOSTART=true'
+        backup: yes
       become: no
