@@ -1,16 +1,18 @@
 # ansible-packstack
 
-Deploying a packstack-based OpenStack test instance using Ansible.
+Deploying a [packstack-based OpenStack](https://www.rdoproject.org/install/packstack/) test instance using Ansible.
+Some tools specific to [EGI Federated Cloud](https://wiki.egi.eu/wiki/EGI_Federated_Cloud) will also be installed:
+* [Keystone VOMS authentication](https://github.com/IFCA/keystone-voms)
+* [OOI](https://github.com/openstack/ooi/) for OCCI support
 
 Based on:
 
   * Packstack and OpenStack
-    * https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux_OpenStack_Platform/2/html/Getting_Started_Guide/part-Deploying_OS_using_PackStack.html
     * https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/
+    * https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux_OpenStack_Platform/2/html/Getting_Started_Guide/part-Deploying_OS_using_PackStack.html
+    * https://docs.openstack.org/security-guide/secure-communication.html
     * https://www.tecmint.com/openstack-installation-guide-rhel-centos/
     * https://linuxacademy.com/howtoguides/posts/show/topic/12453-deploying-openstack-rdo-allinone-vm-for-multidomain-support
-    * https://docs.openstack.org/security-guide/secure-communication.html
-    * https://github.com/gbraad/dockerfile-openstack-client
   * Federated Cloud (Keystone-VOMS, OOI)
     * https://wiki.egi.eu/wiki/Federated_Cloud_Ocata_guide
     * https://keystone-voms.readthedocs.io/en/stable-newton/configuration.html
@@ -33,6 +35,7 @@ vim inventory.ini
 ansible-playbook weapons.yaml -i inventory.ini -u $(whoami)
 # Install and run Packstack, configure HTTPS for Horizon and Keystone
 ansible-playbook packstack.yaml -i inventory.ini -u $(whoami)
+# Once this is done it's recommended to reboot the server
 # Enable Keystone VOMS support
 ansible-playbook keystone_voms.yaml -i inventory.ini -u $(whoami)
 # Install OOI for OCCI endpoint
@@ -41,7 +44,7 @@ ansible-playbook ooi.yaml -i inventory.ini -u $(whoami)
 
 ## Testing
 
-It can be easy to test using a docker wrapper.
+It can be easy to test using a [docker wrapper](https://github.com/gbraad/dockerfile-openstack-client).
 
 Copy `/root/keystonerc_admin` or `/root/keystonerc_demo` configuration to a
 site-specific file in `~/.stack` directory
