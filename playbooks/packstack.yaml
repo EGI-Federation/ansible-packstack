@@ -393,7 +393,7 @@
             mode: 0750
         - name: Create clouds.yaml
           template:
-            src: clouds.yaml.j2
+            src: templates/clouds.yaml.j2
             dest: "{{ lookup('env', 'HOME') }}/.config/openstack/clouds.yaml"
             backup: true
       delegate_to: localhost

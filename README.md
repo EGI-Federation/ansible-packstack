@@ -32,19 +32,21 @@ Based on:
 
 ```sh
 # Configure Ansible remote host
-cp inventory.ini.sample inventory.ini
+cp inventory/inventory.ini.sample inventory.ini
 vim inventory.ini
 # Install usual CLI tools
-ansible-playbook weapons.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/weapons.yaml -i inventory.ini -u $(whoami)
 # Install and run Packstack, configure HTTPS for Horizon and Keystone
-ansible-playbook packstack.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/packstack.yaml -i inventory.ini -u $(whoami)
 # Once this is done it's recommended to reboot the server
 # Create default OpenStack projects for FedCloud
-ansible-playbook projects.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/projects.yaml -i inventory.ini -u $(whoami)
+# Enable IGTF CA
+ansible-playbook playbooks/igtf.yaml -i inventory.ini -u $(whoami)
 # Enable Keystone VOMS support
-ansible-playbook keystone_voms.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/keystone_voms.yaml -i inventory.ini -u $(whoami)
 # Install OOI for OCCI endpoint
-ansible-playbook ooi.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/ooi.yaml -i inventory.ini -u $(whoami)
 ```
 
 ## Testing
