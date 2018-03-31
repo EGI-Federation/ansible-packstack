@@ -1,3 +1,4 @@
 ansible
 shade
 shade-ansible
+python-openstackclient
