@@ -18,37 +18,31 @@
     - name: Ensure git is installed
       yum: name=git state=installed
 
-    - name: Create my user account
+    - name: Use ZSH for {{ ansible_user }}
       user: name="{{ ansible_user }}" shell=/usr/bin/zsh
 
-    - name: Add my public key to the server
+    - name: Add public key to the server
       authorized_key: user="{{ ansible_user }}"
                       key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
       become: no
 
-    - name: Install oh-my-zsh
-      git: repo=https://github.com/robbyrussell/oh-my-zsh.git
-           dest=~/.oh-my-zsh
-      become: no
-
-    - name: Copy .zshrc template
-      command: cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
-      args:
-        creates: ~/.zshrc
-      become: no
-
-    - name: Enable tmux plugin
-      lineinfile:
-        dest: ~/.zshrc
-        insertafter: '^plugins='
-        line: '  tmux'
-        backup: yes
-      become: no
-
-    - name: Enable tmux autostart
-      lineinfile:
-        dest: ~/.zshrc
-        insertafter: '^# ZSH_CUSTOM'
-        line: 'export ZSH_TMUX_AUTOSTART=true'
-        backup: yes
+    - name: ZSH setup
+      block:
+        - name: Install oh-my-zsh
+          git: repo=https://github.com/robbyrussell/oh-my-zsh.git
+               dest=~/.oh-my-zsh
+        - name: Copy .zshrc template
+          command: cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
+          args:
+            creates: ~/.zshrc
+        - name: Enable tmux plugin
+          lineinfile:
+            dest: ~/.zshrc
+            insertafter: '^plugins='
+            line: '  tmux'
+        - name: Enable tmux autostart
+          lineinfile:
+            dest: ~/.zshrc
+            insertafter: '^# ZSH_CUSTOM'
+            line: 'export ZSH_TMUX_AUTOSTART=true'
       become: no
