@@ -25,11 +25,6 @@
     - name: Use ZSH for {{ ansible_user }}
       user: name="{{ ansible_user }}" shell=/usr/bin/zsh
 
-    - name: Add public key to the server
-      authorized_key: user="{{ ansible_user }}"
-                      key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-      become: no
-
     - name: ZSH setup
       block:
         - name: Install oh-my-zsh
