@@ -52,10 +52,16 @@ ansible-playbook playbooks/ooi.yaml
 
 ## Testing
 
+OpenStack client can use `~/.config/openstack/clouds.yaml` that was created by
+`packstack.yaml`:
+
+```sh
+openstack --os-cloud server_fqdn image list
+```
+
 It can be easy to test using a [docker wrapper](https://github.com/gbraad/dockerfile-openstack-client).
 
-Copy `/root/keystonerc_admin` or `/root/keystonerc_demo` configuration to a
-site-specific file in `~/.stack` directory
+Copy `/root/keystonerc_admin` configuration to a site-specific file in `~/.stack`:
 
 ```sh
 $ cat ~/.stack/my_site
@@ -70,6 +76,9 @@ export OS_IDENTITY_API_VERSION=3
 
 ```sh
 # Listing available images
+# Using configuration in ~/.config/openstack/clouds.yaml
+docker run -it --rm -v ~/.config/openstack:/root/.config/openstack gbraad/openstack-client:centos openstack --os-cloud server_fqdn image list
+# Using configuration in ~/.stack
 docker run -it --rm -v ~/.stack:/root/.stack gbraad/openstack-client:centos stack my_site openstack image list
 # Retrieving a Keystone token
 OS_TOKEN=$(docker run -it --rm -v ~/.stack:/root/.stack gbraad/openstack-client:centos stack my_site openstack token issue -f value -c id)
