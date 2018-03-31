@@ -5,6 +5,9 @@ Some tools specific to [EGI Federated Cloud](https://wiki.egi.eu/wiki/EGI_Federa
 * [Keystone VOMS authentication](https://github.com/IFCA/keystone-voms)
 * [OOI](https://github.com/openstack/ooi/) for OCCI support
 
+OpenStack client configuration file will be created as
+`~/.config/openstack/clouds.yaml`, pre-existing file will be backed-up.
+
 Based on:
 
   * Packstack and OpenStack
@@ -36,7 +39,7 @@ ansible-playbook weapons.yaml -i inventory.ini -u $(whoami)
 # Install and run Packstack, configure HTTPS for Horizon and Keystone
 ansible-playbook packstack.yaml -i inventory.ini -u $(whoami)
 # Once this is done it's recommended to reboot the server
-# Create default OpenStack projects
+# Create default OpenStack projects for FedCloud
 ansible-playbook projects.yaml -i inventory.ini -u $(whoami)
 # Enable Keystone VOMS support
 ansible-playbook keystone_voms.yaml -i inventory.ini -u $(whoami)

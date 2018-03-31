@@ -14,3 +14,13 @@
         - project_name: dteam
         - project_name: ops
         - project_name: fedcloud
+
+    - os_user_role:
+        cloud: " {{ server_fqdn }}"
+        user: admin
+        role: admin
+        project: "{{ item.project_name }}"
+      with_items:
+        - project_name: dteam
+        - project_name: ops
+        - project_name: fedcloud
