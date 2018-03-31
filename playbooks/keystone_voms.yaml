@@ -6,7 +6,7 @@
     # XXX This should be configurable
     - name: Add default VOs LSC files
       copy:
-        src: ./lsc/
+        src: ./templates/lsc/
         dest: /etc/grid-security/vomsdir/
 
     # XXX This should be configurable
@@ -39,23 +39,24 @@
     - name: Install Keystone VOMS module
       yum: name=python-keystone_voms state=installed
 
-    - name: Add VOMS filter
-      blockinfile:
-        path: /etc/keystone/keystone-paste.ini
-        block: |
-          [filter:voms]
-          paste.filter_factory = keystone_voms.core:VomsAuthNMiddleware.factory
-      notify:
-        - restart apache
-
-    - name: Enable VOMS filter in the public_api pipeline
-      lineinfile:
-        dest: /etc/keystone/keystone-paste.ini
-        regexp: '^pipeline = (.* ec2_extension) public_service'
-        line: 'pipeline = \1 voms public_service'
-        backrefs: yes
-      notify:
-        - restart apache
+    - name: Configure VOMS filter for authentication
+      block:
+        - name: Add VOMS filter
+          blockinfile:
+            path: /etc/keystone/keystone-paste.ini
+            block: |
+              [filter:voms]
+              paste.filter_factory = keystone_voms.core:VomsAuthNMiddleware.factory
+          notify:
+            - restart apache
+        - name: Enable VOMS filter in the public_api pipeline
+          lineinfile:
+            dest: /etc/keystone/keystone-paste.ini
+            regexp: '^pipeline = (.* ec2_extension) public_service'
+            line: 'pipeline = \1 voms public_service'
+            backrefs: yes
+          notify:
+            - restart apache
 
     - name: Add VOMS configuration for keystone
       blockinfile:
