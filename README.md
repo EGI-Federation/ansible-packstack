@@ -26,27 +26,28 @@ Based on:
 
  * Prerequisites
   * a VM with CentOS 7
-  * an ssh access with a user having password-less sudo (here the local user)
+  * an ssh access with a user having password-less sudo
   * a public IP registered with a FQDN
-  * a certificate with its key and CA files
+  * a certificate with its key and the CA
 
+The ansible user is packstack by default, specify another one using `-u`.
 ```sh
 # Configure Ansible remote host
-cp inventory/inventory.ini.sample inventory.ini
-vim inventory.ini
+cp inventory/inventory.ini.sample inventory/inventory.ini
+vim inventory/inventory.ini
 # Install usual CLI tools
-ansible-playbook playbooks/weapons.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/weapons.yaml
 # Install and run Packstack, configure HTTPS for Horizon and Keystone
-ansible-playbook playbooks/packstack.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/packstack.yaml
 # Once this is done it's recommended to reboot the server
 # Create default OpenStack projects for FedCloud
-ansible-playbook playbooks/projects.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/projects.yaml
 # Enable IGTF CA
-ansible-playbook playbooks/igtf.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/igtf.yaml
 # Enable Keystone VOMS support
-ansible-playbook playbooks/keystone_voms.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/keystone_voms.yaml
 # Install OOI for OCCI endpoint
-ansible-playbook playbooks/ooi.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/ooi.yaml
 ```
 
 ## Testing
