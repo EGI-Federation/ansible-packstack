@@ -6,7 +6,7 @@
     # XXX This should be configurable
     - name: Add default VOs LSC files
       copy:
-        src: ./templates/lsc/
+        src: ./files/lsc/
         dest: /etc/grid-security/vomsdir/
 
     # XXX This should be configurable

@@ -51,6 +51,7 @@
             path: /etc/nova/api-paste.ini
             section: composite:occi_api_11
             option: keystone
+            # XXX this is based on an existing section that may differ
             # yamllint disable-line rule:line-length
             value: cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit osprofiler authtoken keystonecontext legacy_v2_compatible occi osapi_compute_app_v21
           notify:
