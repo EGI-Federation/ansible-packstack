@@ -37,7 +37,9 @@
         gpgkey: http://repository.egi.eu/community/keys/APPDBCOMM-DEB-PGP-KEY.asc
 
     - name: Install Keystone VOMS module
-      yum: name=python-keystone_voms state=installed
+      yum:
+        name: python-keystone_voms
+        state: installed
 
     - name: Configure VOMS filter for authentication
       block:
@@ -76,4 +78,6 @@
 
   handlers:
     - name: restart apache
-      service: name=httpd state=restarted
+      service:
+        name: httpd
+        state: restarted

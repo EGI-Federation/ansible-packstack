@@ -5,31 +5,47 @@
   become_method: sudo
   tasks:
     - name: Ensure vim is installed
-      yum: name=vim state=installed
+      yum:
+        name: vim
+        state: installed
 
     - name: Ensure tmux is installed
-      yum: name=tmux state=installed
+      yum:
+        name: tmux
+        state: installed
 
     - name: Ensure tree is installed
-      yum: name=tree state=installed
+      yum:
+        name: tree
+        state: installed
 
     - name: Ensure htop is installed
-      yum: name=htop state=installed enablerepo=epel
+      yum:
+        name: htop
+        state: installed
+        enablerepo: epel
 
     - name: Ensure Zsh is installed
-      yum: name=zsh state=installed
+      yum:
+        name: zsh
+        state: installed
 
     - name: Ensure git is installed
-      yum: name=git state=installed
+      yum:
+        name: git
+        state: installed
 
     - name: Use ZSH for {{ ansible_user }}
-      user: name="{{ ansible_user }}" shell=/usr/bin/zsh
+      user:
+        name: "{{ ansible_user }}"
+        shell: /usr/bin/zsh
 
     - name: ZSH setup
       block:
         - name: Install oh-my-zsh
-          git: repo=https://github.com/robbyrussell/oh-my-zsh.git
-               dest=~/.oh-my-zsh
+          git:
+            repo: https://github.com/robbyrussell/oh-my-zsh.git
+            dest: ~/.oh-my-zsh
           tags:
             - skip_ansible_lint
         - name: Copy .zshrc template

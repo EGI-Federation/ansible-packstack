@@ -13,7 +13,9 @@
         gpgkey: http://repository.egi.eu/community/keys/APPDBCOMM-DEB-PGP-KEY.asc
 
     - name: Install OOI
-      yum: name=python-ooi state=installed
+      yum:
+        name: python-ooi
+        state: installed
 
     - name: Update nova api-paste.ini for OCCI
       block:
@@ -137,10 +139,16 @@
 
   handlers:
     - name: restart nova-api
-      service: name=openstack-nova-api state=restarted
+      service:
+        name: openstack-nova-api
+        state: restarted
 
     - name: restart nova-compute
-      service: name=openstack-nova-compute state=restarted
+      service:
+        name: openstack-nova-compute
+        state: restarted
 
     - name: restart iptables
-      service: name=iptables state=restarted
+      service:
+        name: iptables
+        state: restarted
