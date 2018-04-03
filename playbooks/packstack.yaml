@@ -10,7 +10,7 @@
 
     - name: Install updates
       package:
-        name: *
+        name: '*'
         state: latest
         update_cache: yes
       tags:
@@ -448,7 +448,7 @@
 
     - name: install updates
       package:
-        name: *
+        name: '*'
         state: latest
         update_cache: yes
       tags:
