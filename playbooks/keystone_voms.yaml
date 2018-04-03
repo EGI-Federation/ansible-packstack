@@ -1,0 +1,135 @@
+---
+- hosts: packstack
+  become: yes
+  become_method: sudo
+  tasks:
+    # XXX This should be configurable
+    - name: Add default VOs LSC files
+      copy:
+        src: ./files/lsc/
+        dest: /etc/grid-security/vomsdir/
+
+    # XXX This should be configurable
+    - name: Add default VO configuration for keystone
+      blockinfile:
+        path: /etc/keystone/voms.json
+        create: yes
+        block: |
+          {
+            "ops": {
+              "tenant": "ops"
+            },
+            "dteam": {
+              "tenant": "dteam"
+            },
+            "fedcloud.egi.eu": {
+              "tenant": "fedcloud"
+            }
+          }
+
+    # XXX here repo is hardcoded (no ocata version yet)
+    - name: Configure Keystone VOMS repository
+      yum_repository:
+        name: keystone.voms-centos-7-x86_6
+        description: Repository for keystone.voms
+        baseurl: "http://repository.egi.eu/community/software/keystone.voms/stable-newton/releases/centos/7/x86_64/RPMS/"
+        gpgcheck: no
+        gpgkey: http://repository.egi.eu/community/keys/APPDBCOMM-DEB-PGP-KEY.asc
+
+    - name: Install Keystone VOMS module
+      yum:
+        name: python-keystone_voms
+        state: installed
+
+    - name: Configure VOMS filter for authentication
+      block:
+        - name: Add VOMS filter
+          ini_file:
+            path: /etc/keystone/keystone-paste.ini
+            section: filter:voms
+            option: paste.filter_factory
+            value: keystone_voms.core:VomsAuthNMiddleware.factory
+          notify:
+            - restart apache
+        - name: Enable VOMS filter in the public_api pipeline
+          # XXX Should use ini_file but based on existing and non fixed value
+          lineinfile:
+            dest: /etc/keystone/keystone-paste.ini
+            regexp: '^pipeline = (.* ec2_extension) public_service'
+            line: 'pipeline = \1 voms public_service'
+            backrefs: yes
+          notify:
+            - restart apache
+
+    - name: Add VOMS configuration for keystone
+      block:
+        - name: Add VOMS vomsdir_path in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: vomsdir_path
+            value: /etc/grid-security/vomsdir
+          notify:
+            - restart apache
+        - name: Add VOMS ca_path in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: ca_path
+            value: /etc/grid-security/certificates
+          notify:
+            - restart apache
+        - name: Add VOMS ca_path in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: voms_policy
+            value: /etc/keystone/voms.json
+          notify:
+            - restart apache
+        - name: Add VOMS ca_path in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: vomsapi_lib
+            value: libvomsapi.so.1
+          notify:
+            - restart apache
+        - name: Add VOMS autocreate_users in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: autocreate_users
+            value: 'True'
+          notify:
+            - restart apache
+        - name: Add VOMS add_roles in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            optin: add_roles
+            value: 'False'
+          notify:
+            - restart apache
+        - name: Add VOMS user_roles in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: user_roles
+            value: _member_
+          notify:
+            - restart apache
+        - name: Add VOMS enable_pusp in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: enable_pusp
+            value: 'False'
+          notify:
+            - restart apache
+
+  handlers:
+    - name: restart apache
+      service:
+        name: httpd
+        state: restarted

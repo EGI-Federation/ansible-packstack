@@ -26,52 +26,49 @@ Based on:
 
  * Prerequisites
   * a VM with CentOS 7
-  * an ssh access with a user having password-less sudo (here the local user)
+  * an ssh access with a user having password-less sudo
   * a public IP registered with a FQDN
-  * a certificate with its key and CA files
+  * a certificate with its key and the CA
 
+The ansible user is packstack by default, specify another one using `-u`.
 ```sh
 # Configure Ansible remote host
-cp inventory.ini.sample inventory.ini
-vim inventory.ini
+cp inventory/inventory.ini.sample inventory/inventory.ini
+vim inventory/inventory.ini
 # Install usual CLI tools
-ansible-playbook weapons.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/weapons.yaml
 # Install and run Packstack, configure HTTPS for Horizon and Keystone
-ansible-playbook packstack.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/packstack.yaml
 # Once this is done it's recommended to reboot the server
 # Create default OpenStack projects for FedCloud
-ansible-playbook projects.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/projects.yaml
+# Enable IGTF CA
+ansible-playbook playbooks/igtf.yaml
 # Enable Keystone VOMS support
-ansible-playbook keystone_voms.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/keystone_voms.yaml
 # Install OOI for OCCI endpoint
-ansible-playbook ooi.yaml -i inventory.ini -u $(whoami)
+ansible-playbook playbooks/ooi.yaml
 ```
 
 ## Testing
 
-It can be easy to test using a [docker wrapper](https://github.com/gbraad/dockerfile-openstack-client).
-
-Copy `/root/keystonerc_admin` or `/root/keystonerc_demo` configuration to a
-site-specific file in `~/.stack` directory
+OpenStack client can use `~/.config/openstack/clouds.yaml` that was created by
+`packstack.yaml`:
 
 ```sh
-$ cat ~/.stack/my_site
-export OS_USERNAME=admin
-export OS_PASSWORD=XXXXXXXXXX
-export OS_AUTH_URL=https://XXX.XXX.XXX.XXX:5000/v3
-export OS_PROJECT_NAME=admin
-export OS_USER_DOMAIN_NAME=Default
-export OS_PROJECT_DOMAIN_NAME=Default
-export OS_IDENTITY_API_VERSION=3
+openstack --os-cloud server_fqdn image list
 ```
+
+It can be tested using an handy [docker wrapper](https://github.com/gbraad/dockerfile-openstack-client).
 
 ```sh
 # Listing available images
-docker run -it --rm -v ~/.stack:/root/.stack gbraad/openstack-client:centos stack my_site openstack image list
+# Using configuration in ~/.config/openstack/clouds.yaml
+docker run -it --rm -v ~/.config/openstack:/root/.config/openstack gbraad/openstack-client:centos openstack --os-cloud server_fqdn image list
 # Retrieving a Keystone token
-OS_TOKEN=$(docker run -it --rm -v ~/.stack:/root/.stack gbraad/openstack-client:centos stack my_site openstack token issue -f value -c id)
+OS_TOKEN=$(docker run -it --rm -v ~/.config/openstack:/root/.config/openstack gbraad/openstack-client:centos openstack --os-cloud server_fqdn token issue -f value -c id)
 # Testing OOI/OCCI endpoint
-curl -H "x-auth-token: $OS_TOKEN" 'http://XXX.XXX.XXX.XXX:8787/occi1.1/-/'
+curl -H "x-auth-token: $OS_TOKEN" 'http://server_fqdn:8787/occi1.1/-/'
 ```
 
 ## Troubleshooting

@@ -1,39 +1,53 @@
 ---
 - hosts: packstack
+  gather_facts: yes
   become: yes
   become_method: sudo
   tasks:
     - name: Ensure vim is installed
-      yum: name=vim state=installed
+      package:
+        name: vim
+        state: installed
 
     - name: Ensure tmux is installed
-      yum: name=tmux state=installed
+      package:
+        name: tmux
+        state: installed
 
     - name: Ensure tree is installed
-      yum: name=tree state=installed
+      package:
+        name: tree
+        state: installed
 
     - name: Ensure htop is installed
-      yum: name=htop state=installed enablerepo=epel
+      package:
+        name: htop
+        state: installed
+        enablerepo: epel
 
     - name: Ensure Zsh is installed
-      yum: name=zsh state=installed
+      package:
+        name: zsh
+        state: installed
 
     - name: Ensure git is installed
-      yum: name=git state=installed
+      package:
+        name: git
+        state: installed
 
     - name: Use ZSH for {{ ansible_user }}
-      user: name="{{ ansible_user }}" shell=/usr/bin/zsh
-
-    - name: Add public key to the server
-      authorized_key: user="{{ ansible_user }}"
-                      key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-      become: no
+      user:
+        name: "{{ ansible_user }}"
+        shell: /usr/bin/zsh
 
     - name: ZSH setup
       block:
         - name: Install oh-my-zsh
-          git: repo=https://github.com/robbyrussell/oh-my-zsh.git
-               dest=~/.oh-my-zsh
+          git:
+            repo: https://github.com/robbyrussell/oh-my-zsh.git
+            dest: ~/.oh-my-zsh
+          tags:
+            - skip_ansible_lint
         - name: Copy .zshrc template
           command: cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
           args:

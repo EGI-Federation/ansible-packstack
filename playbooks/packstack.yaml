@@ -1,39 +1,59 @@
 ---
 - hosts: packstack
+  gather_facts: yes
   become: yes
   become_method: sudo
   tasks:
     - name: Set server hostname
-      hostname: name="{{ server_fqdn }}"
+      hostname:
+        name: "{{ server_fqdn }}"
 
     - name: Install updates
-      yum: name=* state=latest update_cache=yes
+      package:
+        name: '*'
+        state: latest
+        update_cache: yes
+      tags:
+        - skip_ansible_lint
 
     - name: Disable firewalld service
-      systemd: name=firewalld enabled=no state=stopped
+      systemd:
+        name: firewalld
+        enabled: no
+        state: stopped
 
     - name: Disable NetworkManager service
-      systemd: name=NetworkManager enabled=no state=stopped
+      systemd:
+        name: NetworkManager
+        enabled: no
+        state: stopped
 
     - name: Enable network service
-      systemd: name=network enabled=yes
+      systemd:
+        name: network
+        enabled: yes
 
     - name: Install NTP package
-      yum: name=ntp state=installed
+      yum:
+        name: ntp
+        state: installed
 
     - name: Enable NTP service
-      systemd: name=ntpd enabled=yes state=started
+      systemd:
+        name: ntpd
+        enabled: yes
+        state: started
 
     - name: Install OpenStack {{ os_release }} repository
-      yum: name=centos-release-openstack-{{ os_release }} state=installed
-      register: install_openstack_repo
-
-    - name: Install updates including Openstack repositories
-      yum: name=* state=latest update_cache=yes
-      when: install_openstack_repo.changed
+      yum:
+        name: centos-release-openstack-{{ os_release }}
+        state: installed
+      notify: install updates
 
     - name: Install packstack installer
-      yum: name=openstack-packstack state=installed
+      yum:
+        name: openstack-packstack
+        state: installed
 
     - name: Copy server certificate
       copy:
@@ -287,32 +307,59 @@
     - name: Fix endpoints in keystone database
       block:
         - name: Look for HTTPS 5000/v2.0 url
-          shell: mysql keystone -s -N -e 'select url from endpoint where url LIKE "http://%5000/v2.0"' | wc -l
+          shell: >
+            mysql keystone -s -N
+            -e 'select url from endpoint where url LIKE "http://%5000/v2.0"'
+            | wc -l
           register: https_5000_v20
           changed_when: False
         - name: Look for HTTPS 35357/v2.0 url
-          shell: mysql keystone -s -N -e 'select url from endpoint where url LIKE "http://%35357/v2.0"' | wc -l
+          shell: >
+            mysql keystone -s -N
+            -e 'select url from endpoint where url LIKE "http://%35357/v2.0"'
+            | wc -l
           register: https_35357_v20
           changed_when: False
         - name: Look for HTTPS 5000/v3 url
-          shell: mysql keystone -s -N -e 'select url from endpoint where url LIKE "http://%5000/v3"' | wc -l
+          shell: >
+            mysql keystone -s -N
+            -e 'select url from endpoint where url LIKE "http://%5000/v3"'
+            | wc -l
           register: https_5000_v3
           changed_when: False
         - name: Look for HTTPS 35357/v3 url
-          shell: mysql keystone -s -N -e 'select url from endpoint where url LIKE "http://%35357/v3"' | wc -l
+          shell: >
+            mysql keystone -s -N
+            -e 'select url from endpoint where url LIKE "http://%35357/v3"'
+            | wc -l
           register: https_35357_v3
           changed_when: False
         - name: Update 5000/v2.0 endpoints in Keystone database
-          shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:5000/v2.0' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5000/v2.0';"
+          shell: >
+            mysql keystone
+            -e "update endpoint set url='https://{{ server_fqdn }}:5000/v2.0'
+            where
+            url='http://{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}:5000/v2.0';"
           when: https_5000_v20.stdout != '0'
         - name: Update 35357/v2.0 endpoints in Keystone database
-          shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:35357/v2.0' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:35357/v2.0';"
+          shell: >
+            mysql keystone
+            -e "update endpoint set
+            url='https://{{ server_fqdn }}:35357/v2.0' where
+            url='http://{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}:35357/v2.0';"
           when: https_35357_v20.stdout != '0'
         - name: Update 5000/v3 endpoints in Keystone database
-          shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:5000/v3' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:5000/v3';"
+          shell: >
+            mysql keystone
+            -e "update endpoint set url='https://{{ server_fqdn }}:5000/v3' where
+            url='http://{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}:5000/v3';"
           when: https_5000_v3.stdout != '0'
         - name: Update 35357/v3 endpoints in Keystone database
-          shell: mysql keystone -e "update endpoint set url='https://{{ server_fqdn }}:35357/v3' where url='http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:35357/v3';"
+          shell: >
+            mysql keystone
+            -e "update endpoint set
+            url='https://{{ server_fqdn }}:35357/v3' where
+            url='http://{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}:35357/v3';"
           when: https_35357_v3.stdout != '0'
 
     - name: Update Keystone endpoint in admin user client conf
@@ -367,7 +414,7 @@
             mode: 0750
         - name: Create clouds.yaml
           template:
-            src: clouds.yaml.j2
+            src: templates/clouds.yaml.j2
             dest: "{{ lookup('env', 'HOME') }}/.config/openstack/clouds.yaml"
             backup: true
       delegate_to: localhost
@@ -375,16 +422,34 @@
 
   handlers:
     - name: restart apache
-      service: name=httpd state=restarted
+      service:
+        name: httpd
+        state: restarted
 
     - name: restart nova-compute
-      service: name=openstack-nova-compute state=restarted
+      service:
+        name: openstack-nova-compute
+        state: restarted
 
     - name: restart glance-api
-      service: name=openstack-glance-api state=restarted
+      service:
+        name: openstack-glance-api
+        state: restarted
 
     - name: restart glance-registry
-      service: name=openstack-glance-registry state=restarted
+      service:
+        name: openstack-glance-registry
+        state: restarted
 
     - name: restart neutron
-      service: name=neutron-server state=restarted
+      service:
+        name: neutron-server
+        state: restarted
+
+    - name: install updates
+      package:
+        name: '*'
+        state: latest
+        update_cache: yes
+      tags:
+        - skip_ansible_lint

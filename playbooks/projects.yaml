@@ -1,9 +1,9 @@
 ---
 - hosts: localhost
   connection: local
-  gather_facts: no
   tasks:
-    - os_project:
+    - name: Create OpenStack projects
+      os_project:
         cloud: "{{ server_fqdn }}"
         state: present
         name: "{{ item.project_name }}"
@@ -15,8 +15,9 @@
         - project_name: ops
         - project_name: fedcloud
 
-    - os_user_role:
-        cloud: " {{ server_fqdn }}"
+    - name: Add admin as admin of OpenStack projects
+      os_user_role:
+        cloud: "{{ server_fqdn }}"
         user: admin
         role: admin
         project: "{{ item.project_name }}"

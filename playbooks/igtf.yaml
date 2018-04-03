@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: packstack
   become: yes
   become_method: sudo
   tasks:
@@ -15,10 +15,10 @@
     - name: Install CAs
       package:
         name: ca-policy-egi-core
-        state: latest
+        state: present
 
     - name: Install CRL package
       package:
         name: fetch-crl
-        state: latest
+        state: present
         enablerepo: epel

@@ -1,0 +1,155 @@
+---
+- hosts: packstack
+  become: yes
+  become_method: sudo
+  tasks:
+    # XXX Hardcoded for OCCI 1.1
+    - name: Configure OOI repository
+      yum_repository:
+        name: ooi-centos-7-x86_6
+        description: Repository for OOI
+        baseurl: http://repository.egi.eu/community/software/ooi/occi-1.1/releases/centos/7/x86_64/RPMS/
+        gpgcheck: no
+        gpgkey: http://repository.egi.eu/community/keys/APPDBCOMM-DEB-PGP-KEY.asc
+
+    - name: Install OOI
+      yum:
+        name: python-ooi
+        state: installed
+
+    - name: Update nova api-paste.ini for OCCI
+      block:
+        - name: Add OCCI filter to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: filter:occi
+            option: paste.filter_factory
+            value: ooi.wsgi:OCCIMiddleware.factory
+          notify:
+            - restart nova-api
+        - name: Add use to OCCI API composite to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: composite:occi_api_11
+            option: use
+            value: call:nova.api.auth:pipeline_factory_v21
+          notify:
+            - restart nova-api
+        - name: Add noauth2 to OCCI API composite to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: composite:occi_api_11
+            option: noauth2
+            # yamllint disable-line rule:line-length
+            value: cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit osprofiler noauth2 occi osapi_compute_app_v21
+          notify:
+            - restart nova-api
+          tags:
+            - skip_ansible_lint
+        - name: Add keystone to OCCI API composite to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: composite:occi_api_11
+            option: keystone
+            # XXX this is based on an existing section that may differ
+            # yamllint disable-line rule:line-length
+            value: cors http_proxy_to_wsgi compute_req_id faultwrap sizelimit osprofiler authtoken keystonecontext legacy_v2_compatible occi osapi_compute_app_v21
+          notify:
+            - restart nova-api
+          tags:
+            - skip_ansible_lint
+        - name: Add use to OOI composite to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: composite:ooi
+            option: use
+            value: call:nova.api.openstack.urlmap:urlmap_factory
+          notify:
+            - restart nova-api
+        - name: Add occi1.1 to OOI composite to nova api-paste.ini
+          ini_file:
+            path: /etc/nova/api-paste.ini
+            section: composite:ooi
+            option: /occi1.1
+            value: occi_api_11
+          notify:
+            - restart nova-api
+
+    - name: Configure OOI in nova.conf
+      block:
+        - name: Enable OOI API in nova.conf
+          ini_file:
+            path: /etc/nova/nova.conf
+            section: DEFAULT
+            option: enabled_apis
+            value: osapi_compute,metadata,ooi
+            backup: yes
+          notify:
+            - restart nova-compute
+        - name: Configure OOI port in nova.conf
+          ini_file:
+            path: /etc/nova/nova.conf
+            section: DEFAULT
+            option: ooi_listen_port
+            value: 8787
+            backup: yes
+          notify:
+            - restart nova-compute
+
+    - name: Create OCCI endpoint
+      block:
+        - name: Create OCCI service
+          os_keystone_service:
+            cloud: "{{ server_fqdn }}"
+            state: present
+            name: occi
+            service_type: occi
+            description: OCCI interface
+        # XXX To be replaced by an HTTPS endpoint
+        - name: Create OCCI endpoint for OOI
+          os_keystone_endpoint:
+            cloud: "{{ server_fqdn }}"
+            service: occi
+            endpoint_interface: public
+            url: http://{{ server_fqdn }}:8787/occi1.1
+            region: RegionOne
+            state: present
+      delegate_to: localhost
+      become: no
+
+    - name: Open OCCI port in iptables
+      lineinfile:
+        dest: /etc/sysconfig/iptables
+        line: '-A INPUT -p tcp -m state --state NEW -m tcp --dport 8787 -j ACCEPT'
+        insertafter: '-A INPUT -p tcp -m state --state NEW -m tcp --dport 22 -j ACCEPT'
+      notify:
+        - restart iptables
+
+    # XXX Patch as in ocata the API list is strictly limited
+    - name: >
+        'Patch /usr/lib/python2.7/site-packages/nova/conf/service.py
+        to add ooi choice in enabled_apis'
+      lineinfile:
+        dest: /usr/lib/python2.7/site-packages/nova/conf/service.py
+        regexp: "(\\s+)('metadata']\\),)"
+        line: "\\1'ooi',\\2"
+        backrefs: true
+        backup: true
+      notify:
+        - restart nova-compute
+
+  handlers:
+    - name: restart nova-api
+      service:
+        name: openstack-nova-api
+        state: restarted
+
+    - name: restart nova-compute
+      service:
+        name: openstack-nova-compute
+        state: restarted
+
+    - name: restart iptables
+      service:
+        name: iptables
+        state: restarted

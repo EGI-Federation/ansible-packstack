@@ -15,12 +15,15 @@ python:
 
 install:
   - pip install ansible
+  # - pip install shade shade-ansible
+  - pip install ansible-lint
   - pip install yamllint
 
 script:
   # Syntax check every ansible playbook in root
   # Don't check main, though, as vars_prompt still
   # trigger during syntax checks, and travis fails
-  - find . -type f -name '*.yaml' -exec yamllint {} \;
+  - yamllint $(git ls-files '*.yaml' '*.yml')
+  - ansible-lint $(git ls-files '*.yaml' '*.yml')
   # XXX Check ansible syntax
   # ansible-playbook --syntax-check -i inventory
