@@ -5,33 +5,33 @@
   become_method: sudo
   tasks:
     - name: Ensure vim is installed
-      yum:
+      package:
         name: vim
         state: installed
 
     - name: Ensure tmux is installed
-      yum:
+      package:
         name: tmux
         state: installed
 
     - name: Ensure tree is installed
-      yum:
+      package:
         name: tree
         state: installed
 
     - name: Ensure htop is installed
-      yum:
+      package:
         name: htop
         state: installed
         enablerepo: epel
 
     - name: Ensure Zsh is installed
-      yum:
+      package:
         name: zsh
         state: installed
 
     - name: Ensure git is installed
-      yum:
+      package:
         name: git
         state: installed
 
