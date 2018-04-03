@@ -44,14 +44,15 @@
     - name: Configure VOMS filter for authentication
       block:
         - name: Add VOMS filter
-          blockinfile:
+          ini_file:
             path: /etc/keystone/keystone-paste.ini
-            block: |
-              [filter:voms]
-              paste.filter_factory = keystone_voms.core:VomsAuthNMiddleware.factory
+            section: filter:voms
+            option: paste.filter_factory
+            value: keystone_voms.core:VomsAuthNMiddleware.factory
           notify:
             - restart apache
         - name: Enable VOMS filter in the public_api pipeline
+          # XXX Should use ini_file but based on existing and non fixed value
           lineinfile:
             dest: /etc/keystone/keystone-paste.ini
             regexp: '^pipeline = (.* ec2_extension) public_service'
@@ -61,20 +62,71 @@
             - restart apache
 
     - name: Add VOMS configuration for keystone
-      blockinfile:
-        path: /etc/keystone/keystone.conf
-        block: |
-          [voms]
-          vomsdir_path = /etc/grid-security/vomsdir
-          ca_path = /etc/grid-security/certificates
-          voms_policy = /etc/keystone/voms.json
-          vomsapi_lib = libvomsapi.so.1
-          autocreate_users = True
-          add_roles = False
-          user_roles = _member_
-          enable_pusp = False
-      notify:
-        - restart apache
+      block:
+        - name: Add VOMS vomsdir_path in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: vomsdir_path
+            value: /etc/grid-security/vomsdir
+          notify:
+            - restart apache
+        - name: Add VOMS ca_path in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: ca_path
+            value: /etc/grid-security/certificates
+          notify:
+            - restart apache
+        - name: Add VOMS ca_path in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: voms_policy
+            value: /etc/keystone/voms.json
+          notify:
+            - restart apache
+        - name: Add VOMS ca_path in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: vomsapi_lib
+            value: libvomsapi.so.1
+          notify:
+            - restart apache
+        - name: Add VOMS autocreate_users in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: autocreate_users
+            value: 'True'
+          notify:
+            - restart apache
+        - name: Add VOMS add_roles in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            optin: add_roles
+            value: 'False'
+          notify:
+            - restart apache
+        - name: Add VOMS user_roles in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: user_roles
+            value: _member_
+          notify:
+            - restart apache
+        - name: Add VOMS enable_pusp in keystone.conf
+          ini_file:
+            path: /etc/keystone/keystone.conf
+            section: voms
+            option: enable_pusp
+            value: 'False'
+          notify:
+            - restart apache
 
   handlers:
     - name: restart apache
